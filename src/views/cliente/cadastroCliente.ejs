@@ -1,0 +1,62 @@
+<%- include('../includes/head')%>
+<%- include('../includes/nav')%>
+<div class="Container">
+  <div class="row">
+    <div class="col-lg-2"></div>
+    
+    <div class="col-lg-8 my-3">
+      <h1 class="text-center">Clientes</h1>
+      <p class="text-center lead">Crie ou edite seu cliente abaixo</p>
+
+      <%- include('../includes/messages')  %>
+
+      <% if(cliente._id){ %>
+      <form action="/cliente/edit/<%=cliente._id %>" method="post">   
+        <% }else{ %>     
+          
+      <form action="/cliente/register" method="post">      
+        <% } %>         
+            <input type="hidden" name="_csrf" value="<%=csrfToken %>">
+            <div class="form-group">
+              <label class="form-label">Nome</label>
+              <input type="text"  value="<%= cliente.nome%>" class="form-control" name="nome" >
+            </div>
+            <div class="form-group">
+              <label class="form-label">CEP</label>
+              <input type="text" value="<%= cliente.cep%>" class="form-control" name="cep" >
+            </div>
+            <div class="form-group">
+              <label class="form-label">Endereço</label>
+              <input type="text" value="<%= cliente.endereco%>" class="form-control" name="endereco" >
+            </div>
+            <div class="form-group">
+              <label class="form-label">Cidade</label>
+              <input type="text" value="<%= cliente.cidade%>" class="form-control" name="cidade" >
+            </div>
+            <div class="form-group">
+              <label class="form-label">Estado</label>
+              <input type="text" value="<%= cliente.estado%>" class="form-control" name="estado" >
+            </div>
+            <div class="form-group">
+              <label class="form-label">CPF / CNPJ</label>
+              <input type="text" value="<%= cliente.cpf_cnpj%>" class="form-control" name="cpf_cnpj" >
+            </div>
+            <div class="form-group">
+              <label class="form-label">Telefone</label>
+              <input type="text" value="<%= cliente.telefone%>" class="form-control" name="telefone" >
+            </div>
+            <div class="form-group">
+              <label class="form-label">Telefone 2</label>
+              <input type="text" value="<%= cliente.telefone2%>" class="form-control" name="telefone2" >
+            </div>
+            <button type="submit" class="btn btn-primary my-3">Salvar</button>
+          </form>
+     
+
+    </div>
+
+    <div class="col-lg-2"></div>
+  </div>
+</div>
+  
+  <%- include('../includes/footer')%>
