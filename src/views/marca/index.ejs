@@ -1,39 +1,48 @@
 <%- include('../includes/head')%>
-  <%- include('../includes/nav')%>
-    <div class="Container">
-      <div class="row">
-        <div class="col-lg-2"></div>
+<%- include('../includes/nav')%>
 
-        <div class="col-lg-8 my-3">
-          <h1 class="text-center">Marcas</h1>
-          <p class="text-center lead">Suas marcas estão abaixo</p>
+<div class="container my-4">
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 fw-bold mb-0">Catálogo de Marcas</h1>
+                <a href="/marca/new" class="btn btn-primary">+ Nova marca</a>
+            </div>
 
-          <%- include('../includes/messages') %>
-            <% if(marcas.length>0){%>
-              <div class="responsive-table">
-                <table class="table my-3">
-                  <% marcas.forEach(marca=>{ %>
-                    <tr>
-                      <td>
-                        <%=marca.descricao%>
-                      </td>                                         
-                      <td><a href="/marca/index/<%=marca._id%>">Editar</a></td>
-                      <td><a class="text-danger" href="/marca/delete/<%=marca._id%>">Deletar</a></td>
+            <%- include('../includes/messages') %>
 
-                    </tr>
-                    <%}) %>
-
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-dark text-nowrap">
+                        <tr>
+                            
+                            <th>Descrição</th>
+                            <th class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if(marcas.length > 0) { %>
+                            <% marcas.forEach(p => { %>
+                                <tr>                                   
+                                    <td><%= p.descricao %></td>                                    
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="/marca/load/<%= p._id %>" class="btn btn-warning ms-2">Editar</a>
+                                            <a href="/marca/delete/<%= p._id %>" class="btn btn-danger ms2" onclick="return confirm('Tem certeza que deseja inativar este marca?')">Inativar</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="5" class="text-center py-4">Nenhum marca  encontrado.</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
                 </table>
-              </div>
-              <%}else{%>
-                <p class="text-center lead">Não existem marcas cadastradas</p>
-              <%} %>
-
-
+            </div>
         </div>
-
-        <div class="col-lg-2"></div>
-      </div>
     </div>
+</div>
 
-    <%- include('../includes/footer')%>
+<%- include('../includes/footer')%>

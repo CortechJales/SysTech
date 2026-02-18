@@ -22,7 +22,7 @@ exports.register = async (req, res) => {
 
         req.flash('success', 'Equipamento cadastrado com sucesso.');
         // Redireciona de volta para a ficha do cliente
-        req.session.save(() => res.redirect(`/marca/index/${marca.marca.id}`));
+        req.session.save(() => res.redirect(`/marca/load/${marca.marca.id}`));
     } catch (e) {
         console.log(e);
         res.render('404');
@@ -49,7 +49,7 @@ exports.edit = async (req, res) => {
         }
 
         req.flash('success', 'Marca atualizado.');
-        req.session.save(() => res.redirect(`/marca/index/${marca.marca.id}`));
+        req.session.save(() => res.redirect(`/marca/load/${marca.marca.id}`));
     } catch (e) {
         res.render('404');
     }
