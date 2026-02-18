@@ -72,6 +72,12 @@ class Equipamento {
         if (typeof clienteId !== 'string') return;
         return await EquipamentoModel.find({ cliente: clienteId }).sort({ criadoEm: -1 });
     }
+    static async buscaEquipamentos() {
+        return await EquipamentoModel.find()
+        .populate('cliente')
+        .populate('marca')
+        .sort({ criadoEm: -1 });
+    }
 }
 
 module.exports = Equipamento;

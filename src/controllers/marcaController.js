@@ -4,6 +4,11 @@ exports.index = async (req, res) => {
        res.render('marca/cadastroMarca', { marca: {} });
 };
 
+exports.list = async (req, res) => {
+     const marcas = await Marca.buscaMarcas();
+       res.render('marca/index', { marcas});
+};
+
 exports.register = async (req, res) => {
     try {
         const marca = new Marca(req.body);
@@ -44,7 +49,7 @@ exports.edit = async (req, res) => {
         }
 
         req.flash('success', 'Marca atualizado.');
-        req.session.save(() => res.redirect(`/marca/index/${req.body.marca}`));
+        req.session.save(() => res.redirect(`/marca/index/${marca.marca.id}`));
     } catch (e) {
         res.render('404');
     }
@@ -57,6 +62,6 @@ exports.delete = async (req,res)=>{
 
     if (!marca) return res.render('404');
     req.flash('success', 'Marca apagado com sucesso');
-    req.session.save(() => res.redirect('/'));
+    req.session.save(() => res.redirect('/marca/list'));
 
 };

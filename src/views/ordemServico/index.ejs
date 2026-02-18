@@ -1,0 +1,50 @@
+<%- include('../includes/head')%>
+<%- include('../includes/nav')%>
+
+<div class="container my-4">
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+            <h1 class="h3 fw-bold mb-4">Histórico de Ordens de Serviço</h1>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-dark text-nowrap">
+                        <tr>
+                            <th>Início</th>
+                            <th>Cliente</th>
+                            <th>Motor</th>
+                            <th>Status</th>
+                            <th>Aprovado em</th>
+                            <th>Valor Total</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% servicos.forEach(os => { %>
+                            <tr>
+                                <td class="small"><%= os.data_inicio ? os.data_inicio.toLocaleDateString('pt-BR') : '--' %></td>
+                                <td><strong><%= os.cliente?.nome %></strong></td>
+                                <td class="small"><%= os.equipamento?.modelo %></td>
+                                <td>
+                                    <span class="badge rounded-pill 
+                                        <%= os.status === 'Em orçamento' ? 'bg-warning text-dark' : 
+                                            os.status === 'Fechado' ? 'bg-dark' : 'bg-primary' %>">
+                                        <%= os.status %>
+                                    </span>
+                                </td>
+                                <td class="small text-muted text-center">
+                                    <%= os.data_orcamento_aprovado ? os.data_orcamento_aprovado.toLocaleDateString('pt-BR') : '-' %>
+                                </td>
+                                <td class="fw-bold">R$ <%= os.valor_total.toFixed(2) %></td>
+                                <td>
+                                    <a href="/os/load/<%= os._id %>" class="btn btn-sm btn-outline-primary">Abrir</a>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../includes/footer')%>

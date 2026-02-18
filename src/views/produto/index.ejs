@@ -1,64 +1,55 @@
 <%- include('../includes/head')%>
-  <%- include('../includes/nav')%>
-    <div class="Container">
-      <div class="row">
-        <div class="col-lg-2"></div>
+<%- include('../includes/nav')%>
 
-        <div class="col-lg-8 my-3">
-          <h1 class="text-center">Agenda</h1>
-          <p class="text-center lead">Seus contatos estão abaixo</p>
+<div class="container my-4">
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 fw-bold mb-0">Catálogo de Produtos</h1>
+                <a href="/produto/new" class="btn btn-primary">+ Novo Produto</a>
+            </div>
 
-          <%- include('../includes/messages') %>
-            <% if(clientes.length>0){%>
-              <div class="responsive-table">
-                <table class="table my-3">
-                  <% clientes.forEach(cliente=>{ %>
-                    <tr>
-                      <td>
-                        <%=cliente.nome%>
-                      </td>
-                      <td>
-                        <%=cliente.cep%>
-                      </td>
-                      <td>
-                        <%=cliente.endereco%>
-                      </td>
-                      <td>
-                        <%=cliente.cidade%>
-                      </td>
-                      <td>
-                        <%=cliente.estado%>
-                      </td>
-                      <td>
-                        <%=cliente.cpf_cnpj%>
-                      </td>
-                      <td>
-                        <%=cliente.telefone%>
-                      </td>
-                      <td>
-                        <%=cliente.telefone2%>
-                      </td>
-                      <td>
-                      <input type="checkbox" <%= cliente.ativo ? 'checked' : '' %> style="pointer-events:none">
-                      </td>
-                      
-                      <td><a href="/cliente/index/<%=cliente._id%>">Editar</a></td>
-                      <td><a class="text-danger" href="/cliente/delete/<%=cliente._id%>">Deletar</a></td>
+            <%- include('../includes/messages') %>
 
-                    </tr>
-                    <%}) %>
-
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-dark text-nowrap">
+                        <tr>
+                            <th width="80">Código</th>
+                            <th>Descrição</th>
+                            <th>Valor de Venda</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if(produtos.length > 0) { %>
+                            <% produtos.forEach(p => { %>
+                                <tr>
+                                    <td class="fw-bold text-primary">#<%= p.codigo %></td>
+                                    <td><%= p.descricao %></td>
+                                    <td>R$ <%= Number(p.valorVenda).toFixed(2) %></td>
+                                    <td class="text-center">
+                                        <span class="badge bg-success">Ativo</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="/produto/load/<%= p._id %>" class="btn btn-warning ms-2">Editar</a>
+                                            <a href="/produto/delete/<%= p._id %>" class="btn btn-danger ms2" onclick="return confirm('Tem certeza que deseja inativar este produto?')">Inativar</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="5" class="text-center py-4">Nenhum produto ativo encontrado.</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
                 </table>
-              </div>
-              <%}else{%>
-                <p class="text-center lead">Não existem contatos na sua agenda</p>
-              <%} %>
-
-
+            </div>
         </div>
-
-        <div class="col-lg-2"></div>
-      </div>
     </div>
+</div>
 
-    <%- include('../includes/footer')%>
+<%- include('../includes/footer')%>

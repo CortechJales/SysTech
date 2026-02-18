@@ -5,45 +5,20 @@
         <div class="col-lg-2"></div>
 
         <div class="col-lg-8 my-3">
-          <h1 class="text-center">Agenda</h1>
-          <p class="text-center lead">Seus contatos estão abaixo</p>
+          <h1 class="text-center">Marcas</h1>
+          <p class="text-center lead">Suas marcas estão abaixo</p>
 
           <%- include('../includes/messages') %>
-            <% if(clientes.length>0){%>
+            <% if(marcas.length>0){%>
               <div class="responsive-table">
                 <table class="table my-3">
-                  <% clientes.forEach(cliente=>{ %>
+                  <% marcas.forEach(marca=>{ %>
                     <tr>
                       <td>
-                        <%=cliente.nome%>
-                      </td>
-                      <td>
-                        <%=cliente.cep%>
-                      </td>
-                      <td>
-                        <%=cliente.endereco%>
-                      </td>
-                      <td>
-                        <%=cliente.cidade%>
-                      </td>
-                      <td>
-                        <%=cliente.estado%>
-                      </td>
-                      <td>
-                        <%=cliente.cpf_cnpj%>
-                      </td>
-                      <td>
-                        <%=cliente.telefone%>
-                      </td>
-                      <td>
-                        <%=cliente.telefone2%>
-                      </td>
-                      <td>
-                      <input type="checkbox" <%= cliente.ativo ? 'checked' : '' %> style="pointer-events:none">
-                      </td>
-                      
-                      <td><a href="/cliente/index/<%=cliente._id%>">Editar</a></td>
-                      <td><a class="text-danger" href="/cliente/delete/<%=cliente._id%>">Deletar</a></td>
+                        <%=marca.descricao%>
+                      </td>                                         
+                      <td><a href="/marca/index/<%=marca._id%>">Editar</a></td>
+                      <td><a class="text-danger" href="/marca/delete/<%=marca._id%>">Deletar</a></td>
 
                     </tr>
                     <%}) %>
@@ -51,7 +26,7 @@
                 </table>
               </div>
               <%}else{%>
-                <p class="text-center lead">Não existem contatos na sua agenda</p>
+                <p class="text-center lead">Não existem marcas cadastradas</p>
               <%} %>
 
 

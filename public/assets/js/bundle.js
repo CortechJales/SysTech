@@ -66,6 +66,147 @@ var Login = /*#__PURE__*/function () {
 
 /***/ },
 
+/***/ "./frontend/modules/OrdemServico.js"
+/*!******************************************!*\
+  !*** ./frontend/modules/OrdemServico.js ***!
+  \******************************************/
+(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (/* binding */ OrdemServico)
+/* harmony export */ });
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function _classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
+function _defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, _toPropertyKey(o.key), o); } }
+function _createClass(e, r, t) { return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+var OrdemServico = /*#__PURE__*/function () {
+  function OrdemServico(formClass) {
+    _classCallCheck(this, OrdemServico);
+    this.form = document.querySelector(formClass);
+  }
+  return _createClass(OrdemServico, [{
+    key: "init",
+    value: function init() {
+      if (!this.form) return;
+      this.index = this.form.querySelectorAll('#corpo-itens tr').length;
+      this.events();
+      this.calcTotalGeral();
+    }
+  }, {
+    key: "events",
+    value: function events() {
+      var _this = this;
+      var btnAdd = this.form.querySelector('#btn-add-item');
+      var inputMaoObra = this.form.querySelector('#mao_obra');
+      var corpoItens = this.form.querySelector('#corpo-itens');
+      var inputFiltro = this.form.querySelector('#filtro-produto');
+
+      // Lógica do Filtro
+      if (inputFiltro) {
+        inputFiltro.addEventListener('input', function (e) {
+          return _this.filtrarPeças(e.target.value);
+        });
+      }
+
+      // Adicionar Item
+      if (btnAdd) {
+        btnAdd.addEventListener('click', function () {
+          return _this.addItem();
+        });
+      }
+
+      // Monitorar Mudanças (Mão de Obra, Qtd ou Preço manual)
+      this.form.addEventListener('input', function (e) {
+        if (e.target.id === 'mao_obra' || e.target.classList.contains('input-qtd') || e.target.classList.contains('input-valor')) {
+          _this.calcTotalGeral();
+        }
+      });
+
+      // Remover Item
+      corpoItens.addEventListener('click', function (e) {
+        if (e.target.classList.contains('btn-remover')) {
+          e.target.closest('tr').remove();
+          _this.calcTotalGeral();
+        }
+      });
+    }
+  }, {
+    key: "filtrarPe\xE7as",
+    value: function filtrarPeças(termo) {
+      var select = this.form.querySelector('#sel-prod');
+      var options = select.querySelectorAll('option');
+      var busca = termo.toLowerCase();
+      options.forEach(function (opt) {
+        if (opt.value === "") return;
+        var textoBusca = opt.getAttribute('data-search');
+        // Exibe se encontrar o código ou a descrição
+        opt.style.display = textoBusca.includes(busca) ? 'block' : 'none';
+      });
+
+      // Reseta o select para a primeira opção válida se a atual sumir
+      if (select.options[select.selectedIndex].style.display === 'none') {
+        select.value = "";
+      }
+    }
+  }, {
+    key: "addItem",
+    value: function addItem() {
+      var _select$options$selec;
+      var select = this.form.querySelector('#sel-prod');
+      var inputQtd = this.form.querySelector('#sel-qtd');
+      var corpoItens = this.form.querySelector('#corpo-itens');
+      var descricao = select.value;
+      var valorUnitario = (_select$options$selec = select.options[select.selectedIndex]) === null || _select$options$selec === void 0 ? void 0 : _select$options$selec.dataset.valor;
+      var quantidade = inputQtd.value;
+      if (!descricao || !quantidade || quantidade <= 0) return;
+      var tr = document.createElement('tr');
+      tr.innerHTML = "\n        <td><input type=\"hidden\" name=\"itens[".concat(this.index, "][descricao]\" value=\"").concat(descricao, "\">").concat(descricao, "</td>\n        <td><input type=\"number\" name=\"itens[").concat(this.index, "][quantidade]\" class=\"form-control form-control-sm input-qtd\" value=\"").concat(quantidade, "\"></td>\n        <td><input type=\"number\" step=\"0.01\" name=\"itens[").concat(this.index, "][valorUnitario]\" class=\"form-control form-control-sm input-valor\" value=\"").concat(valorUnitario, "\"></td>\n        <td class=\"subtotal-item fw-bold\">R$ ").concat((valorUnitario * quantidade).toFixed(2), "</td>\n        <td><button type=\"button\" class=\"btn btn-sm text-danger btn-remover\">X</button></td>\n    ");
+      corpoItens.appendChild(tr);
+      this.index++;
+      this.calcTotalGeral();
+
+      // Limpa o filtro após adicionar
+      var inputFiltro = this.form.querySelector('#filtro-produto');
+      inputFiltro.value = '';
+      this.filtrarPeças('');
+    }
+  }, {
+    key: "calcTotalGeral",
+    value: function calcTotalGeral() {
+      var inputMaoObra = this.form.querySelector('#mao_obra');
+      var displayTotalGeral = this.form.querySelector('#total_exibido');
+      var displayTotalPecas = this.form.querySelector('#total_pecas'); // Novo campo
+
+      var totalPecas = 0;
+      var maoDeObra = parseFloat(inputMaoObra === null || inputMaoObra === void 0 ? void 0 : inputMaoObra.value) || 0;
+      var linhas = this.form.querySelectorAll('#corpo-itens tr');
+      linhas.forEach(function (linha) {
+        var qtd = parseFloat(linha.querySelector('.input-qtd').value) || 0;
+        var valorUn = parseFloat(linha.querySelector('.input-valor').value) || 0;
+        var subtotal = qtd * valorUn;
+        linha.querySelector('.subtotal-item').innerText = "R$ ".concat(subtotal.toFixed(2));
+        totalPecas += subtotal; // Soma apenas os produtos
+      });
+
+      // Atualiza o total das peças na tabela
+      if (displayTotalPecas) displayTotalPecas.innerText = totalPecas.toFixed(2);
+
+      // Atualiza o total geral (Peças + Mão de Obra)
+      if (displayTotalGeral) {
+        var totalGeral = totalPecas + maoDeObra;
+        displayTotalGeral.innerText = totalGeral.toFixed(2);
+      }
+    }
+  }]);
+}();
+
+
+/***/ },
+
 /***/ "./node_modules/regenerator-runtime/runtime.js"
 /*!*****************************************************!*\
   !*** ./node_modules/regenerator-runtime/runtime.js ***!
@@ -34711,11 +34852,15 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var regenerator_runtime_runtime__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! regenerator-runtime/runtime */ "./node_modules/regenerator-runtime/runtime.js");
 /* harmony import */ var regenerator_runtime_runtime__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(regenerator_runtime_runtime__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var _modules_Login__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./modules/Login */ "./frontend/modules/Login.js");
+/* harmony import */ var _modules_OrdemServico__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./modules/OrdemServico */ "./frontend/modules/OrdemServico.js");
+
 
 
 
 var login = new _modules_Login__WEBPACK_IMPORTED_MODULE_2__["default"]('.form-login');
 var cadastro = new _modules_Login__WEBPACK_IMPORTED_MODULE_2__["default"]('.form-cadastro');
+var os = new _modules_OrdemServico__WEBPACK_IMPORTED_MODULE_3__["default"]('.form-os');
+os.init();
 login.init();
 cadastro.init();
 //import './assets/css/style.css';

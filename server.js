@@ -21,7 +21,38 @@ const helmet=require('helmet');
 const csrf = require('csurf')
 const {middlewareGlobal , checkCsrfError , csrfMiddleware}=require('./src/middlewares/middleware');
 
-app.use(helmet());
+/*app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        "default-src": ["'self'"],
+        "script-src": ["'self'", "cdn.jsdelivr.net"], // Permite scripts do CDN
+        "style-src": ["'self'", "cdn.jsdelivr.net", "'unsafe-inline'"], // Permite CSS do CDN
+        "connect-src": ["'self'", "cdn.jsdelivr.net"],
+      },
+    },
+  })
+); */
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        "default-src": ["'self'"],
+        // Permite scripts do seu servidor e do CDN do Bootstrap
+        "script-src": ["'self'", "cdn.jsdelivr.net", "'unsafe-inline'"],
+        // Permite o CSS do Bootstrap
+        "style-src": ["'self'", "cdn.jsdelivr.net", "'unsafe-inline'"],
+        // IMPORTANTE: Permite que o formulário seja enviado para o IP da rede
+        "form-action": ["'self'"], 
+        "img-src": ["'self'", "data:", "res.cloudinary.com"],
+        "upgrade-insecure-requests": null, // Desativa o redirecionamento forçado para HTTPS
+      },
+    },
+    // Desativa a política que exige HTTPS para abrir popups/menus
+    crossOriginOpenerPolicy: { policy: "unsafe-none" },
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  })
+)
 app.use(express.urlencoded({extended:true}));
 app.use(express.json());
 app.use(express.static(path.resolve(__dirname,'public')));

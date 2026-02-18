@@ -48,7 +48,7 @@ class Marca {
         const marca = await MarcaModel.findById(id);
         return marca;
     };    
-    static async buscaProduto() {
+    static async buscaMarcas() {
         const marcas = await MarcaModel.find().sort({ descricao: 1 });
         return marcas;
     }

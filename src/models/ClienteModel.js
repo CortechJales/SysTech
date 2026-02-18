@@ -67,7 +67,7 @@ class Cliente {
         const cliente = await ClienteModel.findById(id);
         return cliente;
     };
-    static async buscaContatos() {
+    static async buscaClientes() {
         const clientes = await ClienteModel.find()
         .sort({ criadoEm :1 });
         return clientes;

@@ -1,34 +1,43 @@
 <%- include('../includes/head')%>
 <%- include('../includes/nav')%>
-<div class="Container">
-  <div class="row">
-    <div class="col-lg-2"></div>
-    
-    <div class="col-lg-8 my-3">
-      <h1 class="text-center">Marca</h1>
-      <p class="text-center lead">Crie ou edite seu marca abaixo</p>
 
-      <%- include('../includes/messages')  %>
+<div class="container">
+  <div class="row">
+    <div class="col-lg-3"></div>
+    
+    <div class="col-lg-6 my-3">
+      <h1 class="text-center">Marca</h1>
+      <p class="text-center lead">Gerencie as fabricantes de motores</p>
+
+      <%- include('../includes/messages') %>
 
       <% if(marca._id){ %>
-      <form action="/marca/edit/<%=marca._id %>" method="post">   
-        <% }else{ %>     
-          
-      <form action="/marca/register" method="post">      
-        <% } %>         
-            <input type="hidden" name="_csrf" value="<%=csrfToken %>">
-            <div class="form-group">
-              <label class="form-label">Descrição</label>
-              <input type="text"  value="<%= marca.descricao%>" class="form-control" name="descricao" >
-            </div>                           
-            <button type="submit" class="btn btn-primary my-3">Salvar</button>
-          </form>
-     
+        <form action="/marca/edit/<%= marca._id %>" method="post">
+      <% } else { %>
+        <form action="/marca/register" method="post">
+      <% } %>
+        
+        <input type="hidden" name="_csrf" value="<%=csrfToken %>">
 
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <div class="form-group mb-3">
+              <label class="form-label">Descrição da Marca</label>
+              <input type="text" value="<%= marca.descricao %>" class="form-control" name="descricao" placeholder="Ex: WEG, Voges, Eberle..." required>
+            </div>
+
+            <hr>
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+              <a href="/marca/list" class="btn btn-secondary mt-3">Voltar</a>
+              <button type="submit" class="btn btn-primary mt-3 px-5">Salvar Marca</button>
+            </div>
+          </div>
+        </div>
+      </form>
     </div>
 
-    <div class="col-lg-2"></div>
+    <div class="col-lg-3"></div>
   </div>
 </div>
-  
-  <%- include('../includes/footer')%>
+
+<%- include('../includes/footer')%>

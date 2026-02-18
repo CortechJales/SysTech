@@ -1,0 +1,99 @@
+<%- include('../includes/head')%>
+<%- include('../includes/nav')%>
+<div class="container">
+  <div class="row">
+    <div class="col-lg-2"></div>
+    
+    <div class="col-lg-8 my-3">
+      <h1 class="text-center">Equipamento (Motor)</h1>
+      <p class="text-center lead">Preencha os dados técnicos do motor abaixo</p>
+
+      <%- include('../includes/messages') %>
+
+      <% if(equipamento._id){ %>
+        <form action="/equipamento/edit/<%= equipamento._id %>" method="post">
+      <% } else { %>
+        <form action="/equipamento/register" method="post">
+      <% } %>
+        
+        <input type="hidden" name="_csrf" value="<%=csrfToken %>">
+        <input type="hidden" name="cliente" value="<%= clienteId %>">
+
+        <div class="card shadow-sm">
+          <div class="card-body">
+            
+            <div class="row">
+              <div class="col-md-8 form-group mb-3">
+                <label class="form-label">Modelo / Identificação</label>
+                <input type="text" value="<%= equipamento.modelo %>" class="form-control" name="modelo" placeholder="Ex: Motor LCV 1/2 CV" required>
+              </div>
+
+              <div class="col-md-4 form-group mb-3">
+                <label class="form-label">Marca</label>
+                <select name="marca" class="form-control" required>
+                  <option value="">-- Selecione --</option>
+                  <% marcas.forEach(marca => { %>
+                    <option value="<%= marca._id %>" 
+                      <% 
+                        // Verificamos se existe marca e comparamos o ID convertido para String
+                        const marcaIdEquip = equipamento.marca?._id || equipamento.marca;
+                        if (marcaIdEquip && marcaIdEquip.toString() === marca._id.toString()) { 
+                      %>
+                        selected
+                      <% } %>
+                    >
+                      <%= marca.descricao %>
+                    </option>
+                  <% }) %>
+                </select>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-3 form-group mb-3">
+                <label class="form-label">RPM</label>
+                <input type="text" value="<%= equipamento.rpm %>" class="form-control" name="rpm" placeholder="Ex: 3500">
+              </div>
+              <div class="col-md-3 form-group mb-3">
+                <label class="form-label">Polos</label>
+                <input type="text" value="<%= equipamento.polos %>" class="form-control" name="polos" placeholder="Ex: 2">
+              </div>
+              <div class="col-md-3 form-group mb-3">
+                <label class="form-label">Fases</label>
+                <input type="text" value="<%= equipamento.fases %>" class="form-control" name="fases" placeholder="Ex: 3">
+              </div>
+              <div class="col-md-3 form-group mb-3">
+                <label class="form-label">Tensão (V)</label>
+                <input type="text" value="<%= equipamento.tensao %>" class="form-control" name="tensao" placeholder="Ex: 220/380">
+              </div>
+            </div>
+
+            <div class="form-group mb-3">
+              <label class="form-label">Defeito Relatado</label>
+              <textarea name="defeito" class="form-control" rows="3" placeholder="Descreva o problema apresentado..."><%= equipamento.defeito %></textarea>
+            </div>
+
+            <div class="form-group mb-3">
+              <label class="form-label">Status do Equipamento</label>
+              <select name="ativo" class="form-control">
+                <option value="true" <%= equipamento.ativo !== false ? 'selected' : '' %>>Ativo (Na Oficina)</option>
+                <option value="false" <%= equipamento.ativo === false ? 'selected' : '' %>>Inativo / Entregue</option>
+              </select>
+            </div>
+
+            <hr>
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+              <a href="/cliente/index/<%= clienteId %>" class="btn btn-secondary mt-3">Voltar</a>
+              <button type="submit" class="btn btn-primary mt-3 px-5">Salvar Motor</button>
+            </div>
+
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="col-lg-2"></div>
+  </div>
+</div>
+  
+  <%- include('../includes/footer')%>

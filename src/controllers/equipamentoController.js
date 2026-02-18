@@ -6,7 +6,7 @@ exports.index = async (req, res) => {
         const { clienteId } = req.params;
         const marcas = await Marca.buscaMarcas(); // Busca todas as marcas cadastradas
         
-        res.render('equipamento', { 
+        res.render('equipamento/cadastroEquipamento', { 
             equipamento: {}, 
             clienteId, 
             marcas 
@@ -16,6 +16,31 @@ exports.index = async (req, res) => {
     }
 };
 
+exports.list = async (req, res) => {
+  try {
+    let equipamentos = await Equipamento.buscaEquipamentos() || [];
+
+    equipamentos.sort((a, b) => {
+      const nomeA = a.cliente?.nome?.toLowerCase() || '';
+      const nomeB = b.cliente?.nome?.toLowerCase() || '';
+
+      // 1ª Camada: Comparar nomes dos clientes
+      if (nomeA < nomeB) return -1;
+      if (nomeA > nomeB) return 1;
+
+      // 2ª Camada: Se o nome for IGUAL, ordena pela Data (mais recente primeiro)
+      const dataA = new Date(a.criadoEm);
+      const dataB = new Date(b.criadoEm);
+      return dataB - dataA; // Ordem decrescente de data
+    });
+
+    res.render('equipamento/index', { equipamentos });
+  } catch (e) {
+    console.log(e);
+    res.render('404');
+  }
+};
+
 exports.register = async (req, res) => {
     try {
         const equipamento = new Equipamento(req.body);
@@ -23,13 +48,13 @@ exports.register = async (req, res) => {
 
         if (equipamento.errors.length > 0) {
             req.flash('errors', equipamento.errors);
-            req.session.save(() => res.redirect('back'));
+            req.session.save(() => res.redirect('/'));
             return;
         }
 
         req.flash('success', 'Equipamento cadastrado com sucesso.');
         // Redireciona de volta para a ficha do cliente
-        req.session.save(() => res.redirect(`/cliente/index/${req.body.cliente}`));
+        req.session.save(() => res.redirect(`/equipamento/load/${equipamento.equipamento.id}`));
     } catch (e) {
         console.log(e);
         res.render('404');
@@ -38,12 +63,18 @@ exports.register = async (req, res) => {
 
 exports.editIndex = async (req, res) => {
     if (!req.params.id) return res.render('404');
-    const equipamento = await Equipamento.buscaPorId(req.params.id);
+    
+    const [equipamento, marcas] = await Promise.all([
+        Equipamento.buscaPorId(req.params.id),
+        Marca.buscaMarcas()
+    ]);
+
     if (!equipamento) return res.render('404');
 
-    res.render('equipamento', { 
+    res.render('equipamento/cadastroEquipamento', { 
         equipamento, 
-        clienteId: equipamento.cliente._id 
+        clienteId: equipamento.cliente._id,
+        marcas 
     });
 };
 
@@ -54,12 +85,12 @@ exports.edit = async (req, res) => {
 
         if (equipamento.errors.length > 0) {
             req.flash('errors', equipamento.errors);
-            req.session.save(() => res.redirect('back'));
+            req.session.save(() => res.redirect('/'));
             return;
         }
 
         req.flash('success', 'Equipamento atualizado.');
-        req.session.save(() => res.redirect(`/cliente/index/${req.body.cliente}`));
+        req.session.save(() => res.redirect(`/equipamento/load/${equipamento.equipamento.id}`));
     } catch (e) {
         res.render('404');
     }

@@ -5,6 +5,11 @@ exports.index = (req, res) => {
     res.render('cliente/cadastroCliente', { cliente: {} });
 };
 
+exports.list = async (req, res) => {
+     const clientes = await Cliente.buscaClientes();
+       res.render('cliente/index', {clientes});
+};
+
 exports.register = async (req, res) => {
     try {
         const cliente = new Cliente(req.body);
