@@ -1,96 +1,110 @@
-require('dotenv').config();
+const path = require('path');
+const fs = require('fs');
 
+// ===== DOTENV =====
+if (process.versions.electron) {
+  const envPath = path.join(process.resourcesPath, '.env');
+  if (fs.existsSync(envPath)) {
+    require('dotenv').config({ path: envPath });
+  } else {
+    require('dotenv').config();
+  }
+} else {
+  require('dotenv').config();
+}
+
+// ===== DEPENDÊNCIAS =====
 const express = require('express');
-const app= express(); 
-const mongoose =require('mongoose');
-
-mongoose.connect(process.env.CONNECTIONSTRING)
-.then(()=>{
-    app.emit('pronto');
-})
-.catch(e=>console.log(e));
-
+const mongoose = require('mongoose');
 const session = require('express-session');
 const MongoStore = require('connect-mongo').default;
-const flash=require('connect-flash');
+const flash = require('connect-flash');
+const helmet = require('helmet');
+const csrf = require('csurf');
 
-const routes=require('./routes');
-const path=require('path');
+const routes = require('./routes');
+const {
+  middlewareGlobal,
+  checkCsrfError,
+  csrfMiddleware,
+} = require('./src/middlewares/middleware');
 
-const helmet=require('helmet');
-const csrf = require('csurf')
-const {middlewareGlobal , checkCsrfError , csrfMiddleware}=require('./src/middlewares/middleware');
+const app = express();
+const PORT = 3000;
+const isElectron = !!process.versions.electron;
 
-/*app.use(
-  helmet({
-    contentSecurityPolicy: {
-      directives: {
-        "default-src": ["'self'"],
-        "script-src": ["'self'", "cdn.jsdelivr.net"], // Permite scripts do CDN
-        "style-src": ["'self'", "cdn.jsdelivr.net", "'unsafe-inline'"], // Permite CSS do CDN
-        "connect-src": ["'self'", "cdn.jsdelivr.net"],
-      },
-    },
-  })
-); */
+// ===== MIDDLEWARES =====
 app.use(
   helmet({
-    contentSecurityPolicy: {
-      directives: {
-        "default-src": ["'self'"],
-        // Permite scripts do seu servidor e do CDN do Bootstrap
-        "script-src": ["'self'", "cdn.jsdelivr.net", "'unsafe-inline'"],
-        // Permite o CSS do Bootstrap
-        "style-src": ["'self'", "cdn.jsdelivr.net", "'unsafe-inline'"],
-        // IMPORTANTE: Permite que o formulário seja enviado para o IP da rede
-        "form-action": ["'self'"], 
-        "img-src": ["'self'", "data:", "res.cloudinary.com"],
-        "upgrade-insecure-requests": null, // Desativa o redirecionamento forçado para HTTPS
-      },
-    },
-    // Desativa a política que exige HTTPS para abrir popups/menus
-    crossOriginOpenerPolicy: { policy: "unsafe-none" },
-    crossOriginResourcePolicy: { policy: "cross-origin" },
+    contentSecurityPolicy: false,
   })
-)
-app.use(express.urlencoded({extended:true}));
+);
+
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(express.static(path.resolve(__dirname,'public')));
+app.use(express.static(path.resolve(__dirname, 'public')));
 
+app.set('views', path.resolve(__dirname, 'src', 'views'));
+app.set('view engine', 'ejs');
 
-const sessionOptions = session({
-    secret: 'fifnskgnegiepgn45647mascacaf4etr135',
+// ===== SESSION (SEMPRE MONGO) =====
+app.use(
+  session({
+    secret: 'systech_secret',
     store: MongoStore.create({
-        mongoUrl: process.env.CONNECTIONSTRING
+      mongoUrl: process.env.CONNECTIONSTRING,
     }),
     resave: false,
     saveUninitialized: false,
     cookie: {
-        maxAge: 1000 * 60 * 60 * 24 * 7,
-        httpOnly: true
-    }
-});
+      maxAge: 1000 * 60 * 60 * 24 * 7,
+      httpOnly: true,
+    },
+  })
+);
 
-app.use(sessionOptions);
 app.use(flash());
 
-app.set('views', path.resolve(__dirname,'src', 'views'));
-app.set('view engine','ejs');
-
+// ===== CSRF =====
 app.use(csrf());
-
-//Nossos próprios middlewares
 app.use(middlewareGlobal);
 app.use(checkCsrfError);
 app.use(csrfMiddleware);
+
+// ===== ROTAS =====
 app.use(routes);
 
+// ===== START SERVER =====
+async function startServer() {
+  if (!process.env.CONNECTIONSTRING) {
+    throw new Error('CONNECTIONSTRING não encontrada no .env');
+  }
 
+  // evita múltiplas conexões
+  if (mongoose.connection.readyState === 0) {
+    await mongoose.connect(process.env.CONNECTIONSTRING);
+    console.log('MongoDB conectado');
+  }
 
+  return new Promise((resolve) => {
+    app.listen(PORT, () => {
+      console.log(
+        isElectron
+          ? `Servidor Electron rodando em http://localhost:${PORT}`
+          : `Servidor Web rodando em http://localhost:${PORT}`
+      );
+      resolve();
+    });
+  });
+}
 
-app.on('pronto',()=>{
-    app.listen(3000,()=>{
-    console.log('Acessar http://localhost:3000');
-    console.log('Servidor executando na porta 3000');
-});
-});
+// 👉 SE FOR WEB, INICIA AUTOMATICAMENTE
+if (!isElectron) {
+  startServer().catch((err) => {
+    console.error('Erro ao iniciar servidor:', err);
+    process.exit(1);
+  });
+}
+
+// 👉 Electron importa isso
+module.exports = { startServer };

@@ -1,15 +1,39 @@
 {
-  "name": "agenda",
-  "version": "1.0.0",
+  "name": "systech",
+  "version": "1.0.1",
   "description": "",
   "license": "ISC",
   "author": "",
   "type": "commonjs",
-  "main": "server.js",
+  "main": "electron/main.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon server.js --ignore public --ignore frontend",
-    "dev": "webpack -w"
+    "web": "nodemon server.js --ignore public --ignore frontend",
+    "electron": "electron .",
+    "dev": "webpack -w",
+    "build": "electron-builder"
+  },
+   "build": {
+    "extraResources": [".env"],
+    "appId": "com.corturato.systech",
+    "productName": "SysTech",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "**/*",
+      "!dist",
+      "!node_modules/.cache"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "electron/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -33,6 +57,8 @@
     "@babel/core": "^7.28.6",
     "@babel/preset-env": "^7.28.6",
     "babel-loader": "^10.0.0",
+    "electron": "^40.6.0",
+    "electron-builder": "^26.8.1",
     "nodemon": "^3.1.11",
     "webpack": "^5.104.1",
     "webpack-cli": "^6.0.1"

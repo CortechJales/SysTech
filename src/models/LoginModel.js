@@ -3,6 +3,7 @@ const validator = require('validator');
 const bcrypt = require('bcryptjs');
 
 const LoginSchema = new mongoose.Schema({
+    nome: { type: String, required: true },
     email: { type: String, required: true },
     password: { type: String, required: true },
 });
@@ -32,6 +33,7 @@ class Login {
 
     async register() {
         this.valida();
+        if (this.body.nome.length < 3 || this.body.nome.length >= 50) this.errors.push('o Nome precisa ter entre 3 e 50 caracteres');
         if (this.errors.length > 0) return;
 
         await this.userExists();
@@ -52,6 +54,7 @@ class Login {
         this.cleanUp();
         if (!validator.isEmail(this.body.email)) this.errors.push('E-mail inválido');
         if (this.body.password.length < 3 || this.body.password.length >= 50) this.errors.push('A senha precisa ter entre 3 e 50 caracteres');
+       
 
     }
     cleanUp() {
@@ -61,6 +64,7 @@ class Login {
             }
         }
         this.body = {
+            nome: this.body.nome,
             email: this.body.email,
             password: this.body.password,
         };
