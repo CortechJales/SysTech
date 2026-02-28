@@ -1,67 +1,82 @@
-const Marca = require('../models/marcaModel');
+const { Marca } = require('../models/MarcaModel');
+const { connectLocal } = require('../db/connections');
 
-exports.index = async (req, res) => {
-       res.render('marca/cadastroMarca', { marca: {} });
+exports.index = (req, res) => {
+  res.render('marca/cadastroMarca', { marca: {} });
 };
 
 exports.list = async (req, res) => {
-     const marcas = await Marca.buscaMarcas();
-       res.render('marca/index', { marcas});
+  try {
+    const localConn = await connectLocal();
+    const marcas = await Marca.buscaMarcas(localConn);
+    res.render('marca/index', { marcas });
+  } catch (e) {
+    console.log(e);
+    res.render('404');
+  }
 };
 
 exports.register = async (req, res) => {
-    try {
-        const marca = new Marca(req.body);
-        await marca.register();
+  try {
+    const localConn = await connectLocal();
+    const marca = new Marca(req.body, localConn);
+    await marca.register();
 
-        if (marca.errors.length > 0) {
-            req.flash('errors', marca.errors);
-            req.session.save(() => res.redirect('/marca/index'));
-            return;
-        }
-
-        req.flash('success', 'Equipamento cadastrado com sucesso.');
-        // Redireciona de volta para a ficha do cliente
-        req.session.save(() => res.redirect(`/marca/load/${marca.marca.id}`));
-    } catch (e) {
-        console.log(e);
-        res.render('404');
+    if (marca.errors.length > 0) {
+      req.flash('errors', marca.errors);
+      return req.session.save(() => res.redirect('/marca/new'));
     }
+
+    req.flash('success', 'Marca cadastrada com sucesso.');
+    req.session.save(() => res.redirect(`/marca/load/${marca.marca.id}`));
+  } catch (e) {
+    console.log(e);
+    res.render('404');
+  }
 };
 
 exports.editIndex = async (req, res) => {
+  try {
     if (!req.params.id) return res.render('404');
-    const marca = await Marca.buscaPorID(req.params.id);
+    const localConn = await connectLocal();
+    const marca = await Marca.buscaPorID(req.params.id, localConn);
     if (!marca) return res.render('404');
 
-    res.render('marca/cadastroMarca', {marca});
+    res.render('marca/cadastroMarca', { marca });
+  } catch (e) {
+    res.render('404');
+  }
 };
 
 exports.edit = async (req, res) => {
-    try {
-        const marca = new Marca(req.body);
-        await marca.edit(req.params.id);
+  try {
+    const localConn = await connectLocal();
+    const marca = new Marca(req.body, localConn);
+    await marca.edit(req.params.id);
 
-        if (marca.errors.length > 0) {
-            req.flash('errors', marca.errors);
-            req.session.save(() => res.redirect('marca/cadastroMarca'));
-            return;
-        }
-
-        req.flash('success', 'Marca atualizado.');
-        req.session.save(() => res.redirect(`/marca/load/${marca.marca.id}`));
-    } catch (e) {
-        res.render('404');
+    if (marca.errors.length > 0) {
+      req.flash('errors', marca.errors);
+      return req.session.save(() => res.redirect('back'));
     }
+
+    req.flash('success', 'Marca atualizada com sucesso.');
+    req.session.save(() => res.redirect(`/marca/load/${marca.marca.id}`));
+  } catch (e) {
+    console.log(e);
+    res.render('404');
+  }
 };
 
-exports.delete = async (req,res)=>{
+exports.delete = async (req, res) => {
+  try {
     if (!req.params.id) return res.render('404');
-
-    const marca = await Marca.delete(req.params.id);
+    const localConn = await connectLocal();
+    const marca = await Marca.delete(req.params.id, localConn);
 
     if (!marca) return res.render('404');
-    req.flash('success', 'Marca apagado com sucesso');
+    req.flash('success', 'Marca apagada com sucesso');
     req.session.save(() => res.redirect('/marca/list'));
-
+  } catch (e) {
+    res.render('404');
+  }
 };

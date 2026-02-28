@@ -1,10 +1,14 @@
-const Equipamento = require('../models/equipamentoModel');
-const Marca = require('../models/marcaModel');
+const { Equipamento } = require('../models/EquipamentoModel');
+const { Marca } = require('../models/MarcaModel');
+const { connectLocal } = require('../db/connections');
 
+// Exibe formulário de NOVO equipamento
 exports.index = async (req, res) => {
     try {
         const { clienteId } = req.params;
-        const marcas = await Marca.buscaMarcas(); // Busca todas as marcas cadastradas
+        const localConn = await connectLocal();
+        // Busca marcas para o select do formulário
+        const marcas = await Marca.buscaMarcas(localConn); 
         
         res.render('equipamento/cadastroEquipamento', { 
             equipamento: {}, 
@@ -12,97 +16,100 @@ exports.index = async (req, res) => {
             marcas 
         });
     } catch (e) {
+        console.error(e);
         res.render('404');
     }
 };
 
+// LISTAGEM de todos os equipamentos
 exports.list = async (req, res) => {
-  try {
-    let equipamentos = await Equipamento.buscaEquipamentos() || [];
+    try {
+        const localConn = await connectLocal();
+        const equipamentos = await Equipamento.buscaEquipamentos(localConn);
+        res.render('equipamento/index', { equipamentos });
+    } catch (e) {
+        console.error(e);
+        res.render('404');
+    }
+};
 
-    equipamentos.sort((a, b) => {
-      const nomeA = a.cliente?.nome?.toLowerCase() || '';
-      const nomeB = b.cliente?.nome?.toLowerCase() || '';
+// 🔥 CARREGA DADOS PARA EDIÇÃO (O que faltava)
+exports.editIndex = async (req, res) => {
+    try {
+        if (!req.params.id) return res.render('404');
+        const localConn = await connectLocal();
+        
+        // Buscamos o equipamento e as marcas em paralelo para ganhar tempo
+        const [equipamento, marcas] = await Promise.all([
+            Equipamento.buscaPorId(req.params.id, localConn),
+            Marca.buscaMarcas(localConn)
+        ]);
 
-      // 1ª Camada: Comparar nomes dos clientes
-      if (nomeA < nomeB) return -1;
-      if (nomeA > nomeB) return 1;
+        if (!equipamento) return res.render('404');
 
-      // 2ª Camada: Se o nome for IGUAL, ordena pela Data (mais recente primeiro)
-      const dataA = new Date(a.criadoEm);
-      const dataB = new Date(b.criadoEm);
-      return dataB - dataA; // Ordem decrescente de data
-    });
-
-    res.render('equipamento/index', { equipamentos });
-  } catch (e) {
-    console.log(e);
-    res.render('404');
-  }
+        // Passamos o clienteId separadamente para facilitar no formulário
+        res.render('equipamento/cadastroEquipamento', { 
+            equipamento, 
+            clienteId: equipamento.cliente._id,
+            marcas 
+        });
+    } catch (e) {
+        console.error(e);
+        res.render('404');
+    }
 };
 
 exports.register = async (req, res) => {
     try {
-        const equipamento = new Equipamento(req.body);
+        const localConn = await connectLocal();
+        const equipamento = new Equipamento(req.body, localConn);
         await equipamento.register();
 
         if (equipamento.errors.length > 0) {
             req.flash('errors', equipamento.errors);
-            req.session.save(() => res.redirect('/'));
-            return;
+            return req.session.save(() => res.redirect('back'));
         }
 
         req.flash('success', 'Equipamento cadastrado com sucesso.');
-        // Redireciona de volta para a ficha do cliente
-        req.session.save(() => res.redirect(`/equipamento/load/${equipamento.equipamento.id}`));
+        // Redireciona para carregar o equipamento recém criado
+        req.session.save(() => res.redirect(`/equipamento/load/${equipamento.equipamento._id}`));
     } catch (e) {
-        console.log(e);
+        console.error(e);
         res.render('404');
     }
-};
-
-exports.editIndex = async (req, res) => {
-    if (!req.params.id) return res.render('404');
-    
-    const [equipamento, marcas] = await Promise.all([
-        Equipamento.buscaPorId(req.params.id),
-        Marca.buscaMarcas()
-    ]);
-
-    if (!equipamento) return res.render('404');
-
-    res.render('equipamento/cadastroEquipamento', { 
-        equipamento, 
-        clienteId: equipamento.cliente._id,
-        marcas 
-    });
 };
 
 exports.edit = async (req, res) => {
     try {
-        const equipamento = new Equipamento(req.body);
+        const localConn = await connectLocal();
+        const equipamento = new Equipamento(req.body, localConn);
         await equipamento.edit(req.params.id);
 
         if (equipamento.errors.length > 0) {
             req.flash('errors', equipamento.errors);
-            req.session.save(() => res.redirect('/'));
-            return;
+            return req.session.save(() => res.redirect('back'));
         }
 
-        req.flash('success', 'Equipamento atualizado.');
-        req.session.save(() => res.redirect(`/equipamento/load/${equipamento.equipamento.id}`));
+        req.flash('success', 'Equipamento atualizado com sucesso.');
+        req.session.save(() => res.redirect(`/equipamento/load/${req.params.id}`));
     } catch (e) {
+        console.error(e);
         res.render('404');
     }
 };
 
-exports.delete = async (req,res)=>{
-    if (!req.params.id) return res.render('404');
+exports.delete = async (req, res) => {
+    try {
+        if (!req.params.id) return res.render('404');
+        const localConn = await connectLocal();
+        const equipamento = await Equipamento.delete(req.params.id, localConn);
 
-    const equipamento = await Equipamento.delete(req.params.id);
-
-    if (!equipamento) return res.render('404');
-    req.flash('success', 'Equipamento apagado com sucesso');
-    req.session.save(() => res.redirect('/'));
-
-}
+        if (!equipamento) return res.render('404');
+        
+        req.flash('success', 'Equipamento apagado com sucesso.');
+        req.session.save(() => res.redirect('/equipamento/list'));
+    } catch (e) {
+        console.error(e);
+        res.render('404');
+    }
+};

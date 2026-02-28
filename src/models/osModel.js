@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const SyncQueueSchema = require('./SyncQueueModel');
 
 const OrdemServicoSchema = new mongoose.Schema({
     cliente: { type: mongoose.Schema.Types.ObjectId, ref: 'Cliente', required: true },
@@ -12,12 +13,12 @@ const OrdemServicoSchema = new mongoose.Schema({
         valorTotalItem: Number
     }],
     mao_de_obra: { type: Number, default: 0 },
-    valorTotalGeral: { type: Number, default: 0 }, // Soma dos itens + mão de obra
-    valor_total: { type: Number, default: 0 },     // Campo espelho para compatibilidade
+    valorTotalGeral: { type: Number, default: 0 },
+    valor_total: { type: Number, default: 0 },
     observacao: { type: String, default: '' },
     status: { 
         type: String, 
-        enum: ['Em orçamento', 'Aguardando cliente', 'Em execução', 'Atendido', 'Fechado'],
+        enum: ['Em orçamento', 'Aguardando cliente', 'Em execution', 'Atendido', 'Fechado'],
         default: 'Em orçamento'
     },
     data_orcamento_passado: { type: Date },
@@ -26,49 +27,55 @@ const OrdemServicoSchema = new mongoose.Schema({
     criadoEm: { type: Date, default: Date.now },
 });
 
-const OSModel = mongoose.models.OrdemServico || mongoose.model('OrdemServico', OrdemServicoSchema);
-
 class OrdemServico {
-    constructor(body) {
+    constructor(body, connection) {
         this.body = body;
         this.errors = [];
         this.os = null;
+        this.connection = connection;
+        this.Model = connection.models.OrdemServico || connection.model('OrdemServico', OrdemServicoSchema);
     }
 
     async register() {
         this.valida();
         if (this.errors.length > 0) return;
         this.calculaTotais();
-        this.os = await OSModel.create(this.body);
+        this.os = await this.Model.create(this.body);
+        
+        await this.addToQueue('create', this.os.toObject());
     }
+
     async edit(id) {
         if (typeof id !== 'string') return;
         
-        // 1. Busca a OS atual no banco para verificações de segurança
-        const osNoBanco = await OSModel.findById(id);
+        const osNoBanco = await this.Model.findById(id);
         if (!osNoBanco) return;
 
-        // 2. Trava de segurança: Se já estava fechada, não permite re-editar
         if (osNoBanco.status === 'Fechado') {
             this.errors.push('Esta OS está fechada e não pode ser alterada.');
             return;
         }
 
-        // 3. Lógica da Data Final Automática:
-        // Se o novo status enviado for "Fechado", setamos a data_final agora
         if (this.body.status === 'Fechado') {
             this.body.data_final = new Date(); 
         }
 
         this.valida();
         if (this.errors.length > 0) return;
-        
         this.calculaTotais();
         
-        // 4. Atualiza no banco
-        this.os = await OSModel.findByIdAndUpdate(id, this.body, { new: true });
+        this.os = await this.Model.findByIdAndUpdate(id, this.body, { new: true });
+        await this.addToQueue('update', { _id: id, ...this.body });
     }
-    
+
+    async addToQueue(action, payload) {
+        const SyncQueue = this.connection.models.SyncQueue || this.connection.model('SyncQueue', SyncQueueSchema);
+        await SyncQueue.create({
+            collectionName: 'OrdemServico',
+            action: action,
+            payload: payload,
+        });
+    }
 
     valida() {
         if (!this.body.cliente) this.errors.push('Cliente é obrigatório.');
@@ -95,22 +102,24 @@ class OrdemServico {
 
         const totalGeral = totalItens + maoDeObra;
         this.body.valorTotalGeral = totalGeral;
-        this.body.valor_total = totalGeral; // Mantém ambos os campos atualizados
+        this.body.valor_total = totalGeral;
     }
 
-    static async buscaPorId(id) {
+    static async buscaPorId(id, connection) {
         if (typeof id !== 'string') return;
-        return await OSModel.findById(id)
+        const Model = connection.models.OrdemServico || connection.model('OrdemServico', OrdemServicoSchema);
+        return await Model.findById(id)
             .populate('cliente')
             .populate({ path: 'equipamento', populate: { path: 'marca' } });
     }
 
-    static async buscaTodos() {
-        return await OSModel.find({ ativo: true })
+    static async buscaTodos(connection) {
+        const Model = connection.models.OrdemServico || connection.model('OrdemServico', OrdemServicoSchema);
+        return await Model.find({ ativo: true })
             .populate('cliente')
             .populate('equipamento')
             .sort({ criadoEm: -1 });
     }
 }
 
-module.exports = OrdemServico;
+module.exports = { OrdemServico, OrdemServicoSchema };

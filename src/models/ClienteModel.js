@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const validator = require('validator');
+const SyncQueueSchema = require('./SyncQueueModel');
 
 const ClienteSchema = new mongoose.Schema({
     nome: { type: String, required: true },
@@ -14,70 +14,97 @@ const ClienteSchema = new mongoose.Schema({
     criadoEm: { type: Date, default: Date.now },
 });
 
-const ClienteModel =
-  mongoose.models.Cliente || mongoose.model('Cliente', ClienteSchema);
-
 class Cliente {
-    constructor(body) {
+    constructor(body, connection) {
         this.body = body;
         this.errors = [];
         this.cliente = null;
+        this.connection = connection;
+        // Instancia o modelo na conexão atual
+        this.Model = connection.models.Cliente || connection.model('Cliente', ClienteSchema);
     }
 
     async register() {
         this.valida();
         if (this.errors.length > 0) return;
-        this.cliente = await ClienteModel.create(this.body);
+
+        this.cliente = await this.Model.create(this.body);
+
+        // 🔥 Enfileira para sincronização
+        await this.addToQueue('create', this.cliente.toObject());
+    }
+
+    async edit(id) {
+        if (typeof id !== 'string') return;
+        this.valida();
+        if (this.errors.length > 0) return;
+
+        this.cliente = await this.Model.findByIdAndUpdate(id, this.body, { new: true });
+        
+        // 🔥 Enfileira edição (mandamos o ID e o novo corpo)
+        await this.addToQueue('update', { _id: id, ...this.body });
+    }
+
+    async addToQueue(action, payload) {
+        const SyncQueue = this.connection.models.SyncQueue || this.connection.model('SyncQueue', SyncQueueSchema);
+        await SyncQueue.create({
+            collectionName: 'Cliente',
+            action: action,
+            payload: payload,
+        });
     }
 
     valida() {
         this.cleanUp();
         if (!this.body.nome) this.errors.push('Nome é obrigatório');
-        if (!this.body.email && !this.body.telefone) {
-            this.errors.push('Pelo menos um contato precisa ser enviado: telefone.');
+        if (!this.body.telefone) {
+            this.errors.push('O telefone é obrigatório para contato.');
         }
     }
+
     cleanUp() {
         for (const key in this.body) {
-            if (typeof this.body[key] !== 'string') {
-                this.body[key] = '';
-            }
+            if (typeof this.body[key] !== 'string') this.body[key] = '';
         }
         this.body = {
             nome: this.body.nome,
-            cep:this.body.cep,
-            endereco:this.body.endereco ,
+            cep: this.body.cep,
+            endereco: this.body.endereco,
             cidade: this.body.cidade,
-            estado:this.body.estado,
-            cpf_cnpj:this.body.cpf_cnpj,
-            telefone:this.body.telefone,
+            estado: this.body.estado,
+            cpf_cnpj: this.body.cpf_cnpj,
+            telefone: this.body.telefone,
             telefone2: this.body.telefone2
         };
     }
-    async edit(id) {
+
+    // Métodos estáticos adaptados para receber conexão
+    static async buscaPorID(id, connection) {
         if (typeof id !== 'string') return;
-        this.valida();
-        if (this.errors.length > 0) return;
-        this.cliente = await ClienteModel.findByIdAndUpdate(id, this.body, { new: true });
+        const Model = connection.models.Cliente || connection.model('Cliente', ClienteSchema);
+        return await Model.findById(id);
     }
 
-    //Nétodos estáticos
-    static async buscaPorID(id) {
+    static async buscaClientes(connection) {
+        const Model = connection.models.Cliente || connection.model('Cliente', ClienteSchema);
+        return await Model.find().sort({ criadoEm: 1 });
+    }
+
+    static async delete(id, connection) {
         if (typeof id !== 'string') return;
-        const cliente = await ClienteModel.findById(id);
+        const Model = connection.models.Cliente || connection.model('Cliente', ClienteSchema);
+        const cliente = await Model.findOneAndDelete({ _id: id });
+
+        // 🔥 Enfileira deleção
+        const SyncQueue = connection.models.SyncQueue || connection.model('SyncQueue', SyncQueueSchema);
+        await SyncQueue.create({
+            collectionName: 'Cliente',
+            action: 'delete',
+            payload: { _id: id },
+        });
+
         return cliente;
-    };
-    static async buscaClientes() {
-        const clientes = await ClienteModel.find()
-        .sort({ criadoEm :1 });
-        return clientes;
-    };
-    static async delete(id) {
-        if (typeof id !== 'string') return;
-        const cliente = await ClienteModel.findOneAndDelete({_id:id});
-        return cliente;
-    };
+    }
 }
 
-
-module.exports = Cliente;
+module.exports = { Cliente, ClienteSchema };

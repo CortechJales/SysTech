@@ -1,55 +1,62 @@
 const mongoose = require('mongoose');
+const SyncQueueSchema = require('./SyncQueueModel');
 
 const ProdutoSchema = new mongoose.Schema({
     codigo: { type: Number },
     descricao: { type: String, required: true },
     valorVenda: { type: Number, required: true },
-    ativo: { type: Boolean, default: true } // Novo campo para controle de exclusão lógica
+    ativo: { type: Boolean, default: true } 
 });
 
-const ProdutoModel = mongoose.models.Produto || mongoose.model('Produto', ProdutoSchema);
-
 class Produto {
-    constructor(body) {
+    constructor(body, connection) {
         this.body = body;
         this.errors = [];
         this.produto = null;
+        this.connection = connection;
+        this.Model = connection.models.Produto || connection.model('Produto', ProdutoSchema);
     }
 
     async register() {
         this.valida();
         if (this.errors.length > 0) return;
 
-        // Busca o último produto pelo código mais alto
-        const ultimoProduto = await ProdutoModel.findOne().sort({ codigo: -1 });
+        // Busca o último código na conexão atual
+        const ultimoProduto = await this.Model.findOne().sort({ codigo: -1 });
         
-        // CORREÇÃO: Verificamos se ultimoProduto existe E se o código é um número válido
         let novoCodigo = 1;
         if (ultimoProduto && !isNaN(ultimoProduto.codigo)) {
             novoCodigo = Number(ultimoProduto.codigo) + 1;
         }
 
-        // Atribuímos o código ao corpo do objeto antes de criar
         this.body.codigo = novoCodigo;
         this.body.ativo = true;
 
-        this.produto = await ProdutoModel.create(this.body);
+        this.produto = await this.Model.create(this.body);
+
+        // 🔥 Enfileira criação
+        await this.addToQueue('create', this.produto.toObject());
     }
 
-    cleanUp() {
-        for (const key in this.body) {
-            if (typeof this.body[key] !== 'string') {
-                this.body[key] = '';
-            }
-        }
+    async edit(id) {
+        if (typeof id !== 'string') return;
+        this.valida();
+        if (this.errors.length > 0) return;
+
+        this.produto = await this.Model.findByIdAndUpdate(id, this.body, { new: true });
         
-        // IMPORTANTE: Não inclua o campo 'codigo' no cleanUp se ele vier do formulário,
-        // pois o código deve ser gerado apenas pelo servidor para evitar fraudes.
-        this.body = {
-            descricao: this.body.descricao,
-            valorVenda: parseFloat(this.body.valorVenda) || 0 // Garante que o valor de venda seja número
-        };
-}
+        // 🔥 Enfileira edição
+        await this.addToQueue('update', { _id: id, ...this.body });
+    }
+
+    async addToQueue(action, payload) {
+        const SyncQueue = this.connection.models.SyncQueue || this.connection.model('SyncQueue', SyncQueueSchema);
+        await SyncQueue.create({
+            collectionName: 'Produto',
+            action: action,
+            payload: payload,
+        });
+    }
 
     valida() {
         this.cleanUp();
@@ -57,29 +64,44 @@ class Produto {
         if (isNaN(parseFloat(this.body.valorVenda))) this.errors.push('Valor Venda precisa ser um número');
     }
 
-       async edit(id) {
-        if (typeof id !== 'string') return;
-        this.valida();
-        if (this.errors.length > 0) return;
-        this.produto = await ProdutoModel.findByIdAndUpdate(id, this.body, { new: true });
+    cleanUp() {
+        for (const key in this.body) {
+            if (typeof this.body[key] !== 'string') this.body[key] = '';
+        }
+        
+        this.body = {
+            descricao: this.body.descricao,
+            valorVenda: parseFloat(this.body.valorVenda) || 0
+        };
     }
 
-    static async buscaPorID(id) {
+    // Métodos estáticos com injeção de conexão
+    static async buscaPorID(id, connection) {
         if (typeof id !== 'string') return;
-        return await ProdutoModel.findById(id);
+        const Model = connection.models.Produto || connection.model('Produto', ProdutoSchema);
+        return await Model.findById(id);
     }
 
-    static async buscaProduto() {
-        // Retorna apenas produtos ativos para a listagem e para o catálogo da OS
-        return await ProdutoModel.find({ ativo: true }).sort({ codigo: 1 });
+    static async buscaProduto(connection) {
+        const Model = connection.models.Produto || connection.model('Produto', ProdutoSchema);
+        return await Model.find({ ativo: true }).sort({ codigo: 1 });
     }
 
-    // Alterado para Inativar em vez de apagar
-    static async inativar(id) {
+    static async inativar(id, connection) {
         if (typeof id !== 'string') return;
-        const produto = await ProdutoModel.findByIdAndUpdate(id, { ativo: false }, { new: true });
+        const Model = connection.models.Produto || connection.model('Produto', ProdutoSchema);
+        const produto = await Model.findByIdAndUpdate(id, { ativo: false }, { new: true });
+
+        if (produto) {
+            const SyncQueue = connection.models.SyncQueue || connection.model('SyncQueue', SyncQueueSchema);
+            await SyncQueue.create({
+                collectionName: 'Produto',
+                action: 'update', // Inativação é um update do campo 'ativo'
+                payload: { _id: id, ativo: false },
+            });
+        }
         return produto;
-    };
+    }
 }
 
-module.exports = Produto;
+module.exports = { Produto, ProdutoSchema };
