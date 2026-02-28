@@ -1,17 +1,11 @@
 const mongoose = require('mongoose');
 const SyncQueueSchema = require('./SyncQueueModel');
-
-// Importamos os Schemas necessários para o Populate funcionar em conexões isoladas
 const { ClienteSchema } = require('./ClienteModel');
 const { MarcaSchema } = require('./MarcaModel');
 
 const EquipamentoSchema = new mongoose.Schema({
     modelo: { type: String, required: true },
-    rpm: { type: String, default: '' },
-    polos: { type: String, default: '' },
-    fases: { type: String, default: '' },
-    tensao: { type: String, default: '' },
-    // Referência para a marca
+    configuracao: { type: String, default: '' }, // Novo campo para TI
     marca: { type: mongoose.Schema.Types.ObjectId, ref: 'Marca', required: true }, 
     defeito: { type: String, default: '' },
     cliente: { type: mongoose.Schema.Types.ObjectId, ref: 'Cliente', required: true },
@@ -25,17 +19,13 @@ class Equipamento {
         this.errors = [];
         this.equipamento = null;
         this.connection = connection;
-        // Instancia o modelo na conexão atual
         this.Model = connection.models.Equipamento || connection.model('Equipamento', EquipamentoSchema);
     }
 
     async register() {
         this.valida();
         if (this.errors.length > 0) return;
-        
         this.equipamento = await this.Model.create(this.body);
-
-        // 🔥 Registra na fila de sincronização
         await this.addToQueue('create', this.equipamento.toObject());
     }
 
@@ -43,10 +33,7 @@ class Equipamento {
         if (typeof id !== 'string') return;
         this.valida();
         if (this.errors.length > 0) return;
-        
         this.equipamento = await this.Model.findByIdAndUpdate(id, this.body, { new: true });
-
-        // 🔥 Registra na fila de sincronização
         await this.addToQueue('update', { _id: id, ...this.body });
     }
 
@@ -67,17 +54,12 @@ class Equipamento {
 
     cleanUp() {
         for (const key in this.body) {
-            if (typeof this.body[key] !== 'string') {
-                this.body[key] = '';
-            }
+            if (typeof this.body[key] !== 'string') this.body[key] = '';
         }
 
         this.body = {
             modelo: this.body.modelo,
-            rpm: this.body.rpm,
-            polos: this.body.polos,
-            fases: this.body.fases,
-            tensao: this.body.tensao,
+            configuracao: this.body.configuracao,
             marca: this.body.marca,
             defeito: this.body.defeito,
             cliente: this.body.cliente,
@@ -86,49 +68,38 @@ class Equipamento {
     }
 
     // --- MÉTODOS ESTÁTICOS ---
-
     static async buscaPorId(id, connection) {
         if (typeof id !== 'string') return;
-
-        // Registrar Schemas na conexão para evitar MissingSchemaError no populate
         connection.models.Marca || connection.model('Marca', MarcaSchema);
         connection.models.Cliente || connection.model('Cliente', ClienteSchema);
-
         const Model = connection.models.Equipamento || connection.model('Equipamento', EquipamentoSchema);
-        
-        return await Model.findById(id)
-            .populate('cliente')
-            .populate('marca');
+        return await Model.findById(id).populate('cliente').populate('marca');
     }
 
     static async buscaEquipamentos(connection) {
-        // Registrar Schemas na conexão para o populate funcionar
         connection.models.Marca || connection.model('Marca', MarcaSchema);
         connection.models.Cliente || connection.model('Cliente', ClienteSchema);
-
         const Model = connection.models.Equipamento || connection.model('Equipamento', EquipamentoSchema);
-        
-        return await Model.find()
-            .populate('cliente')
-            .populate('marca')
-            .sort({ criadoEm: -1 });
+        return await Model.find().populate('cliente').populate('marca').sort({ criadoEm: -1 });
+    }
+
+    // 🔥 NOVO MÉTODO: Busca específica por cliente
+    static async buscaPorCliente(clienteId, connection) {
+        if (typeof clienteId !== 'string') return;
+        connection.models.Marca || connection.model('Marca', MarcaSchema);
+        connection.models.Cliente || connection.model('Cliente', ClienteSchema);
+        const Model = connection.models.Equipamento || connection.model('Equipamento', EquipamentoSchema);
+        return await Model.find({ cliente: clienteId }).populate('marca').sort({ criadoEm: -1 });
     }
 
     static async delete(id, connection) {
         if (typeof id !== 'string') return;
         const Model = connection.models.Equipamento || connection.model('Equipamento', EquipamentoSchema);
-        
         const equipamento = await Model.findOneAndDelete({ _id: id });
-
         if (equipamento) {
             const SyncQueue = connection.models.SyncQueue || connection.model('SyncQueue', SyncQueueSchema);
-            await SyncQueue.create({
-                collectionName: 'Equipamento',
-                action: 'delete',
-                payload: { _id: id },
-            });
+            await SyncQueue.create({ collectionName: 'Equipamento', action: 'delete', payload: { _id: id } });
         }
-
         return equipamento;
     }
 }

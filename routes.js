@@ -48,6 +48,7 @@ route.get('/marca/delete/:id',loginRequired,marcaController.delete)
 //Rotas de Equipamento
 route.get('/equipamento/new/:clienteId', equipamentoController.index);
 route.get('/equipamento/list', loginRequired, equipamentoController.list);
+route.get('/equipamento/list/:clienteId', loginRequired, equipamentoController.listPorCliente);
 route.post('/equipamento/register',loginRequired,equipamentoController.register)
 route.get('/equipamento/load/:id',loginRequired,equipamentoController.editIndex)
 route.post('/equipamento/edit/:id',loginRequired,equipamentoController.edit)
