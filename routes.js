@@ -9,6 +9,7 @@ const marcaController =require('./src/controllers/marcaController');
 const produtoController =require('./src/controllers/produtoController');
 const equipamentoController =require('./src/controllers/equipamentoController');
 const osController =require('./src/controllers/osController');
+const relatorioController = require('./src/controllers/RelatorioController');
 
 const{loginRequired} = require('./src/middlewares/middleware');
 
@@ -61,4 +62,8 @@ route.post('/os/register', loginRequired, osController.register);
 route.get('/os/load/:id', loginRequired, osController.editIndex);
 route.post('/os/edit/:id', loginRequired, osController.edit);
 route.get('/os/delete/:id', loginRequired, osController.delete);
+
+//Rotas de relatórios
+route.get('/relatorio',loginRequired,relatorioController.index);
+route.post('/relatorio',loginRequired,relatorioController.buscar);
 module.exports=route;

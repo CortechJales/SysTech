@@ -38,19 +38,19 @@
                 <div class="row g-3 mb-4 p-3 bg-light rounded shadow-sm">
                     <div class="col-md-3">
                         <label class="form-label fw-bold small">Data Início</label>
-                        <input type="date" name="data_inicio" class="form-control" value="<%= os.data_inicio ? new Date(os.data_inicio.getTime() - os.data_inicio.getTimezoneOffset() * 60000).toISOString().split('T')[0] : '' %>"" <%= isFechado ? 'readonly' : '' %>>
+                        <input type="date" name="data_inicio" class="form-control" value="<%= os.data_inicio ? os.data_inicio.toISOString().split('T')[0] : '' %>" <%= isFechado ? 'readonly' : '' %>>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label fw-bold small">Data Final</label>
-                        <input type="date" name="data_final" class="form-control" value="<%= os.data_final ? new Date(os.data_final.getTime() - os.data_final.getTimezoneOffset() * 60000).toISOString().split('T')[0] : '' %>" <%= isFechado ? 'readonly' : '' %>>
+                        <input type="date" name="data_final" class="form-control" value="<%= os.data_final ? os.data_final.toISOString().split('T')[0] : '' %>" <%= isFechado ? 'readonly' : '' %>>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label fw-bold small">Orçamento Passado</label>
-                        <input type="date" name="data_orcamento_passado" class="form-control" value="<%= os.data_orcamento_aprovado ? new Date(os.data_orcamento_aprovado.getTime() - os.data_orcamento_aprovado.getTimezoneOffset() * 60000).toISOString().split('T')[0] : '' %>" <%= isFechado ? 'readonly' : '' %>>
+                        <input type="date" name="data_orcamento_passado" class="form-control" value="<%= os.data_orcamento_passado ? os.data_orcamento_passado.toISOString().split('T')[0] : '' %>" <%= isFechado ? 'readonly' : '' %>>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label fw-bold small">Orçamento Aprovado</label>
-                        <input type="date" name="data_orcamento_aprovado" class="form-control" value="<%= os.data_orcamento_aprovado ? new Date(os.data_orcamento_aprovado.getTime() - os.data_orcamento_aprovado.getTimezoneOffset() * 60000).toISOString().split('T')[0] : '' %>" <%= isFechado ? 'readonly' : '' %>>
+                        <input type="date" name="data_orcamento_aprovado" class="form-control" value="<%= os.data_orcamento_aprovado ? os.data_orcamento_aprovado.toISOString().split('T')[0] : '' %>" <%= isFechado ? 'readonly' : '' %>>
                     </div>
                 </div>
 

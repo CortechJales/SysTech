@@ -1,0 +1,138 @@
+<%- include('../includes/head') %>
+<%- include('../includes/nav') %>
+
+<div class="container my-4">
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+            <h1 class="h3 fw-bold mb-4">Histórico de Ordens de Serviço</h1>
+
+            <!-- Filtros -->
+            <form action="/relatorio" method="POST" class="row g-3 mb-4">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                
+                <!-- Data Início -->
+                <div class="col-md-3">
+                    <label class="form-label">Data Início</label>
+                    <input type="date" name="dataInicio" class="form-control" value="<%= filtros.dataInicio %>">
+                </div>
+
+                <!-- Data Fim -->
+                <div class="col-md-3">
+                    <label class="form-label">Data Fim</label>
+                    <input type="date" name="dataFim" class="form-control" value="<%= filtros.dataFim %>">
+                </div>
+
+                <!-- Cliente -->
+                <div class="col-md-3">
+                    <label class="form-label">Cliente</label>
+                    <input type="text" name="nomeCliente" class="form-control" value="<%= filtros.nomeCliente %>">
+                </div>
+
+                <!-- Equipamento -->
+                <div class="col-md-3">
+                    <label class="form-label">Equipamento</label>
+                    <input type="text" name="equipamento" class="form-control" value="<%= filtros.equipamento %>">
+                </div>
+
+                <!-- Valor Mínimo -->
+                <div class="col-md-3">
+                    <label class="form-label">Valor Mínimo (R$)</label>
+                    <input type="number" name="valorMin" step="0.01" class="form-control" value="<%= filtros.valorMin %>">
+                </div>
+
+                <!-- Valor Máximo -->
+                <div class="col-md-3">
+                    <label class="form-label">Valor Máximo (R$)</label>
+                    <input type="number" name="valorMax" step="0.01" class="form-control" value="<%= filtros.valorMax %>">
+                </div>
+
+                <!-- Item -->
+                <div class="col-md-3">
+                    <label class="form-label">Item</label>
+                    <input type="text" name="item" class="form-control" value="<%= filtros.item %>">
+                </div>
+
+                <!-- Status -->
+                <div class="col-md-3">
+                    <label class="form-label d-block">Status</label>
+                    <% const statusOptions = ['Em orçamento', 'Aguardando cliente', 'Em execution', 'Atendido', 'Fechado']; %>
+                    <% statusOptions.forEach(statusOption => { %>
+                        <div class="form-check form-check-inline">
+                            <input 
+                                class="form-check-input" 
+                                type="checkbox" 
+                                name="status" 
+                                value="<%= statusOption %>" 
+                                id="status-<%= statusOption.replace(/\s+/g, '') %>"
+                                <%= filtros.status.includes(statusOption) ? 'checked' : '' %>>
+                            <label class="form-check-label" for="status-<%= statusOption.replace(/\s+/g, '') %>">
+                                <%= statusOption %>
+                            </label>
+                        </div>
+                    <% }); %>
+                </div>
+
+                <!-- Botões -->
+                <div class="col-12 mt-2">
+                    <button type="submit" class="btn btn-primary">Filtrar</button>
+                    <a href="/relatorio" class="btn btn-outline-secondary">Limpar</a>
+                </div>
+            </form>
+
+            <!-- Tabela de resultados -->
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-dark text-nowrap">
+                        <tr>
+                            <th>Início</th>
+                            <th>Cliente</th>
+                            <th>Equipamento</th>
+                            <th>Status</th>
+                            <th>Aprovado em</th>
+                            <th>Valor Total</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (dados && dados.length > 0) { %>
+                            <% dados.forEach(os => { %>
+                                <tr>
+                                    <td class="small">
+                                        <%= os.data_inicio ? new Date(os.data_inicio).toLocaleDateString('pt-BR') : '--' %>
+                                    </td>
+                                    <td><strong><%= os.cliente?.nome || '-' %></strong></td>
+                                    <td class="small"><%= os.equipamento?.modelo || '-' %></td>
+                                    <td>
+                                        <span class="badge rounded-pill 
+                                            <%= os.status === 'Em orçamento' ? 'bg-warning text-dark' : 
+                                                os.status === 'Fechado' ? 'bg-dark' : 'bg-primary' %>">
+                                            <%= os.status %>
+                                        </span>
+                                    </td>
+                                    <td class="small text-muted text-center">
+                                        <%= os.data_orcamento_aprovado ? new Date(os.data_orcamento_aprovado).toLocaleDateString('pt-BR') : '-' %>
+                                    </td>
+                                    <td class="fw-bold">
+                                        R$ <%= (os.valorTotalGeral || 0).toFixed(2) %>
+                                    </td>
+                                    <td>
+                                        <a href="/os/load/<%= os._id %>" class="btn btn-sm btn-outline-primary">
+                                            Abrir
+                                        </a>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="7" class="text-center text-muted">Nenhum resultado encontrado</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<%- include('../includes/footer') %>

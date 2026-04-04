@@ -120,6 +120,105 @@ class OrdemServico {
             .populate('equipamento')
             .sort({ criadoEm: -1 });
     }
+    
+    static async relatorio(filtros, connection) {
+    const Model = connection.models.OrdemServico || connection.model('OrdemServico', OrdemServicoSchema);
+
+    // 📌 Registrar models (multi-connection safe)
+
+    if (!connection.models.Cliente) {
+        const { ClienteSchema } = require('./ClienteModel');
+        connection.model('Cliente', ClienteSchema);
+    }
+    const ClienteModel = connection.models.Cliente;
+
+    if (!connection.models.Equipamento) {
+        const { EquipamentoSchema } = require('./EquipamentoModel');
+        connection.model('Equipamento', EquipamentoSchema);
+    }
+    const EquipamentoModel = connection.models.Equipamento;
+
+    if (!connection.models.Marca) {
+        const { MarcaSchema } = require('./MarcaModel');
+        connection.model('Marca', MarcaSchema);
+    }
+
+    const query = { ativo: true };
+
+    // 📅 DATA (CORRIGIDO)
+    if (filtros.dataInicio || filtros.dataFim) {
+        query.data_inicio = {};
+
+        if (filtros.dataInicio) {
+            const inicio = new Date(filtros.dataInicio);
+            inicio.setHours(0, 0, 0, 0);
+            query.data_inicio.$gte = inicio;
+        }
+
+        if (filtros.dataFim) {
+            const fim = new Date(filtros.dataFim);
+            fim.setHours(23, 59, 59, 999);
+            query.data_inicio.$lte = fim;
+        }
+    }
+
+    // 👤 CLIENTE (nome parcial)
+    if (filtros.nomeCliente) {
+        const clientes = await ClienteModel.find({
+            nome: { $regex: filtros.nomeCliente, $options: 'i' }
+        });
+
+        query.cliente = { $in: clientes.map(c => c._id) };
+    }
+
+    // 🔧 EQUIPAMENTO (modelo + descrição)
+    if (filtros.equipamento) {
+        const equipamentos = await EquipamentoModel.find({
+            $or: [
+                { modelo: { $regex: filtros.equipamento, $options: 'i' } },
+                { descricao: { $regex: filtros.equipamento, $options: 'i' } }
+            ]
+        });
+
+        query.equipamento = { $in: equipamentos.map(e => e._id) };
+    }
+
+    // 📊 STATUS
+    if (filtros.status && filtros.status.length > 0) {
+        query.status = { $in: filtros.status };
+    }
+
+    // 💰 VALOR
+    if (filtros.valorMin || filtros.valorMax) {
+        query.valorTotalGeral = {};
+
+        if (filtros.valorMin) {
+            query.valorTotalGeral.$gte = Number(filtros.valorMin);
+        }
+
+        if (filtros.valorMax) {
+            query.valorTotalGeral.$lte = Number(filtros.valorMax);
+        }
+    }
+
+    // 🔍 ITEM (descrição)
+    if (filtros.item) {
+        query['itens.descricao'] = {
+            $regex: filtros.item,
+            $options: 'i'
+        };
+    }
+
+    // 🚀 EXECUÇÃO
+    return await Model.find(query)
+        .populate('cliente')
+        .populate({
+            path: 'equipamento',
+            populate: { path: 'marca' }
+        })
+        .sort({ data_inicio: -1 }) // também ajustado aqui 👈
+        .lean();
 }
+        }
 
 module.exports = { OrdemServico, OrdemServicoSchema };
