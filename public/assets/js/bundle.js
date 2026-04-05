@@ -208,6 +208,441 @@ var OrdemServico = /*#__PURE__*/function () {
 
 /***/ },
 
+/***/ "./frontend/modules/Relatorio.js"
+/*!***************************************!*\
+  !*** ./frontend/modules/Relatorio.js ***!
+  \***************************************/
+(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (/* binding */ Relatorio)
+/* harmony export */ });
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function _toConsumableArray(r) { return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread(); }
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
+function _iterableToArray(r) { if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r); }
+function _arrayWithoutHoles(r) { if (Array.isArray(r)) return _arrayLikeToArray(r); }
+function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
+function _classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
+function _defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, _toPropertyKey(o.key), o); } }
+function _createClass(e, r, t) { return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+var Relatorio = /*#__PURE__*/function () {
+  function Relatorio(containerSelector) {
+    _classCallCheck(this, Relatorio);
+    this.container = document.querySelector(containerSelector);
+    this.coresGlobal = {
+      maoDeObra: '#28a745',
+      // Verde
+      pecas: '#007bff',
+      // Azul
+      status: {
+        'Em orçamento': '#ffc107',
+        'Aguardando cliente': '#36A2EB',
+        'Em execução': '#4BC0C0',
+        'Atendido': '#0d6efd',
+        'Fechado': '#333333'
+      }
+    };
+  }
+  return _createClass(Relatorio, [{
+    key: "init",
+    value: function init() {
+      if (!this.container) return;
+      this.geraGraficos();
+    }
+  }, {
+    key: "geraGraficos",
+    value: function geraGraficos() {
+      var dadosJson = document.getElementById('dados-json');
+      if (!dadosJson) return;
+      var dados = JSON.parse(dadosJson.textContent);
+      var inputInicio = document.getElementsByName('dataInicio')[0];
+      var dataInicioFiltro = inputInicio ? inputInicio.value : null;
+
+      // Execução dos métodos de criação
+      this.criaGraficoStatus(dados);
+      this.criaGraficoData(dados);
+      this.criaGraficoTotalStatus(dados);
+      this.criaGraficoItens(dados);
+      this.criaGraficoComposicao(dados);
+      this.criaGraficoGeralComposicao(dados);
+      this.criaGraficoClientesNovos(dados, dataInicioFiltro);
+    }
+  }, {
+    key: "criaGraficoStatus",
+    value: function criaGraficoStatus(dados) {
+      var _this = this;
+      var statusCount = {};
+      var totalOS = dados.length;
+      dados.forEach(function (os) {
+        statusCount[os.status] = (statusCount[os.status] || 0) + 1;
+      });
+      var ctx = document.getElementById('graficoStatus');
+      if (!ctx) return;
+      new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: Object.keys(statusCount),
+          datasets: [{
+            label: 'OS por Status',
+            data: Object.values(statusCount),
+            backgroundColor: Object.keys(statusCount).map(function (s) {
+              return _this.coresGlobal.status[s] || '#999';
+            })
+          }]
+        },
+        options: {
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: function label(context) {
+                  var label = context.label || '';
+                  var value = context.raw || 0;
+                  var percentage = totalOS > 0 ? (value / totalOS * 100).toFixed(1) : 0;
+                  return "".concat(label, ": ").concat(value, " OS (").concat(percentage, "%)");
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+  }, {
+    key: "criaGraficoData",
+    value: function criaGraficoData(dados) {
+      var dateCount = {};
+      var dadosOrdenados = _toConsumableArray(dados).sort(function (a, b) {
+        return new Date(a.data_inicio) - new Date(b.data_inicio);
+      });
+      dadosOrdenados.forEach(function (os) {
+        var data = new Date(os.data_inicio).toLocaleDateString('pt-BR');
+        dateCount[data] = (dateCount[data] || 0) + 1;
+      });
+      var ctx = document.getElementById('graficoDias');
+      if (!ctx) return;
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: Object.keys(dateCount),
+          datasets: [{
+            label: 'Qtd de OS',
+            data: Object.values(dateCount),
+            borderColor: this.coresGlobal.pecas,
+            backgroundColor: this.coresGlobal.pecas + '33',
+            borderWidth: 4,
+            fill: true,
+            tension: 0.3,
+            pointRadius: 6,
+            pointBackgroundColor: this.coresGlobal.pecas,
+            pointHoverRadius: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                stepSize: 1,
+                callback: function callback(value) {
+                  return Math.floor(value) === value ? value : null;
+                }
+              }
+            },
+            x: {
+              grid: {
+                display: false
+              }
+            }
+          }
+        }
+      });
+    }
+  }, {
+    key: "criaGraficoTotalStatus",
+    value: function criaGraficoTotalStatus(dados) {
+      var _this2 = this;
+      var totalPorStatus = {};
+      var valorTotalGeral = 0;
+      dados.forEach(function (os) {
+        var valor = parseFloat(os.valorTotalGeral) || 0;
+        valorTotalGeral += valor;
+        totalPorStatus[os.status] = (totalPorStatus[os.status] || 0) + valor;
+      });
+      var ctx = document.getElementById('graficoTotal');
+      if (!ctx) return;
+      new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: Object.keys(totalPorStatus),
+          datasets: [{
+            data: Object.values(totalPorStatus),
+            backgroundColor: Object.keys(totalPorStatus).map(function (s) {
+              return _this2.coresGlobal.status[s] || '#999';
+            })
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            title: {
+              display: true,
+              text: "Faturamento Total: R$ ".concat(valorTotalGeral.toLocaleString('pt-BR', {
+                minimumFractionDigits: 2
+              }))
+            },
+            tooltip: {
+              callbacks: {
+                label: function label(context) {
+                  var label = context.label || '';
+                  var value = context.raw || 0;
+                  var percentage = valorTotalGeral > 0 ? (value / valorTotalGeral * 100).toFixed(1) : 0;
+                  return "".concat(label, ": R$ ").concat(value.toLocaleString('pt-BR', {
+                    minimumFractionDigits: 2
+                  }), " (").concat(percentage, "%)");
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+  }, {
+    key: "criaGraficoItens",
+    value: function criaGraficoItens(dados) {
+      var itemContagem = {};
+      var itemFinanceiro = {};
+      dados.forEach(function (os) {
+        var _os$itens;
+        (_os$itens = os.itens) === null || _os$itens === void 0 || _os$itens.forEach(function (item) {
+          var nome = item.descricao || "Sem descrição";
+          var qtd = parseFloat(item.quantidade) || 0;
+          var valorTotal = parseFloat(item.valorTotalItem) || 0;
+          itemContagem[nome] = (itemContagem[nome] || 0) + qtd;
+          itemFinanceiro[nome] = (itemFinanceiro[nome] || 0) + valorTotal;
+        });
+      });
+      var itensOrdenados = Object.entries(itemContagem).sort(function (a, b) {
+        return b[1] - a[1];
+      }).slice(0, 10);
+      var labels = itensOrdenados.map(function (i) {
+        return i[0];
+      });
+      var ctx = document.getElementById('graficoItens');
+      if (!ctx) return;
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Quantidade Total',
+            data: itensOrdenados.map(function (i) {
+              return i[1];
+            }),
+            backgroundColor: '#4BC0C0',
+            financeiro: labels.map(function (nome) {
+              return itemFinanceiro[nome];
+            })
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          plugins: {
+            tooltip: {
+              callbacks: {
+                footer: function footer(context) {
+                  var valorRS = context[0].dataset.financeiro[context[0].dataIndex];
+                  return "Valor Acumulado: R$ ".concat(valorRS.toLocaleString('pt-BR', {
+                    minimumFractionDigits: 2
+                  }));
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+  }, {
+    key: "criaGraficoComposicao",
+    value: function criaGraficoComposicao(dados) {
+      var ultimasOS = dados.slice(0, 15).reverse();
+      var labels = ultimasOS.map(function (os) {
+        var _os$cliente;
+        var data = new Date(os.data_inicio).toLocaleDateString('pt-BR');
+        return "".concat(((_os$cliente = os.cliente) === null || _os$cliente === void 0 || (_os$cliente = _os$cliente.nome) === null || _os$cliente === void 0 ? void 0 : _os$cliente.split(' ')[0]) || 'S/N', " (").concat(data, ")");
+      });
+      var dadosPecas = ultimasOS.map(function (os) {
+        return (os.itens || []).filter(function (i) {
+          return i.tipo !== 'Serviço';
+        }).reduce(function (acc, item) {
+          return acc + (parseFloat(item.valorTotalItem) || 0);
+        }, 0);
+      });
+      var dadosMaoDeObra = ultimasOS.map(function (os) {
+        var fixa = parseFloat(os.mao_de_obra) || 0;
+        var itensServico = (os.itens || []).filter(function (i) {
+          return i.tipo === 'Serviço';
+        }).reduce(function (acc, item) {
+          return acc + (parseFloat(item.valorTotalItem) || 0);
+        }, 0);
+        return fixa + itensServico;
+      });
+      var ctx = document.getElementById('graficoComposicao');
+      if (!ctx) return;
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Peças/Produtos',
+            data: dadosPecas,
+            backgroundColor: this.coresGlobal.pecas
+          }, {
+            label: 'Mão de Obra',
+            data: dadosMaoDeObra,
+            backgroundColor: this.coresGlobal.maoDeObra
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            x: {
+              stacked: true
+            },
+            y: {
+              stacked: true,
+              beginAtZero: true,
+              grace: '15%'
+            }
+          },
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: function label(c) {
+                  return "".concat(c.dataset.label, ": R$ ").concat(c.parsed.y.toLocaleString('pt-BR', {
+                    minimumFractionDigits: 2
+                  }));
+                }
+              }
+            }
+          }
+        },
+        plugins: [{
+          id: 'datalabels',
+          afterDraw: function afterDraw(chart) {
+            var ctx = chart.ctx,
+              _chart$scales = chart.scales,
+              x = _chart$scales.x,
+              y = _chart$scales.y;
+            ctx.save();
+            ctx.textAlign = 'center';
+            ctx.font = 'bold 11px Arial';
+            chart.data.labels.forEach(function (label, index) {
+              var total = chart.data.datasets[0].data[index] + chart.data.datasets[1].data[index];
+              if (total > 0) ctx.fillText("R$ ".concat(total.toFixed(2)), x.getPixelForValue(label), y.getPixelForValue(total) - 10);
+            });
+            ctx.restore();
+          }
+        }]
+      });
+    }
+  }, {
+    key: "criaGraficoGeralComposicao",
+    value: function criaGraficoGeralComposicao(dados) {
+      var totalMO = 0;
+      var totalPecas = 0;
+      dados.forEach(function (os) {
+        var _os$itens2;
+        totalMO += parseFloat(os.mao_de_obra) || 0;
+        (_os$itens2 = os.itens) === null || _os$itens2 === void 0 || _os$itens2.forEach(function (item) {
+          if (item.tipo === 'Serviço') totalMO += parseFloat(item.valorTotalItem) || 0;else totalPecas += parseFloat(item.valorTotalItem) || 0;
+        });
+      });
+      var total = totalMO + totalPecas;
+      var ctx = document.getElementById('graficoGeralComposicao');
+      if (!ctx) return;
+      new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: ['Mão de Obra', 'Peças'],
+          datasets: [{
+            data: [totalMO, totalPecas],
+            backgroundColor: [this.coresGlobal.maoDeObra, this.coresGlobal.pecas]
+          }]
+        },
+        options: {
+          plugins: {
+            title: {
+              display: true,
+              text: "Total: R$ ".concat(total.toLocaleString('pt-BR'))
+            },
+            tooltip: {
+              callbacks: {
+                label: function label(context) {
+                  var value = context.raw || 0;
+                  var percentage = total > 0 ? (value / total * 100).toFixed(1) : 0;
+                  return "".concat(context.label, ": R$ ").concat(value.toLocaleString('pt-BR', {
+                    minimumFractionDigits: 2
+                  }), " (").concat(percentage, "%)");
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+  }, {
+    key: "criaGraficoClientesNovos",
+    value: function criaGraficoClientesNovos(dados, dataInicioFiltro) {
+      var novos = 0,
+        antigos = 0;
+      var clientesProcessados = new Set();
+      var ref = dataInicioFiltro ? new Date(dataInicioFiltro) : new Date(new Date().setDate(new Date().getDate() - 30));
+      dados.forEach(function (os) {
+        var _os$cliente2;
+        if ((_os$cliente2 = os.cliente) !== null && _os$cliente2 !== void 0 && _os$cliente2._id && !clientesProcessados.has(os.cliente._id)) {
+          clientesProcessados.add(os.cliente._id);
+          new Date(os.cliente.criadoEm) >= ref ? novos++ : antigos++;
+        }
+      });
+      var totalClientes = novos + antigos;
+      var ctx = document.getElementById('graficoNovosClientes');
+      if (!ctx) return;
+      new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: ['Novos', 'Antigos'],
+          datasets: [{
+            data: [novos, antigos],
+            backgroundColor: [this.coresGlobal.status['Em orçamento'], '#6c757d']
+          }]
+        },
+        options: {
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: function label(context) {
+                  var value = context.raw || 0;
+                  var percentage = totalClientes > 0 ? (value / totalClientes * 100).toFixed(1) : 0;
+                  return "".concat(context.label, ": ").concat(value, " (").concat(percentage, "%)");
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+  }]);
+}();
+
+
+/***/ },
+
 /***/ "./node_modules/regenerator-runtime/runtime.js"
 /*!*****************************************************!*\
   !*** ./node_modules/regenerator-runtime/runtime.js ***!
@@ -34854,6 +35289,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var regenerator_runtime_runtime__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(regenerator_runtime_runtime__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var _modules_Login__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./modules/Login */ "./frontend/modules/Login.js");
 /* harmony import */ var _modules_OrdemServico__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./modules/OrdemServico */ "./frontend/modules/OrdemServico.js");
+/* harmony import */ var _modules_Relatorio__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./modules/Relatorio */ "./frontend/modules/Relatorio.js");
+
 
 
 
@@ -34861,10 +35298,11 @@ __webpack_require__.r(__webpack_exports__);
 var login = new _modules_Login__WEBPACK_IMPORTED_MODULE_2__["default"]('.form-login');
 var cadastro = new _modules_Login__WEBPACK_IMPORTED_MODULE_2__["default"]('.form-cadastro');
 var os = new _modules_OrdemServico__WEBPACK_IMPORTED_MODULE_3__["default"]('.form-os');
+var relatorio = new _modules_Relatorio__WEBPACK_IMPORTED_MODULE_4__["default"]('.container-relatorio');
 os.init();
 login.init();
 cadastro.init();
-//import './assets/css/style.css';
+relatorio.init(); // 🔥 Inicie aqui
 })();
 
 /******/ })()
