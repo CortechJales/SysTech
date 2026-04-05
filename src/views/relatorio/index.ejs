@@ -185,15 +185,27 @@
                     </script>
 
                     <script>
+                        const coresGlobal = {
+                            maoDeObra: '#28a745', // Verde
+                            pecas: '#007bff',     // Azul
+                            status: {
+                                'Em orçamento': '#ffc107',
+                                'Aguardando cliente': '#36A2EB',
+                                'Em execução': '#4BC0C0',
+                                'Atendido': '#0d6efd',
+                                'Fechado': '#333333'
+                            }
+                        };
                         geraGraficos();
 
                         function geraGraficos() {
-                            const dados = JSON.parse(
-                                document.getElementById('dados-json').textContent
-                            );
-                            const dataInicioFiltro = document.getElementsByName('dataInicio')[0].value;
+                            const dadosJson = document.getElementById('dados-json');
+                            if (!dadosJson) return;
 
-                            //chama função para gerar gráficos
+                            const dados = JSON.parse(dadosJson.textContent);
+                            const inputInicio = document.getElementsByName('dataInicio')[0];
+                            const dataInicioFiltro = inputInicio ? inputInicio.value : null;
+
                             criaGraficoStatus(dados);
                             criaGraficoData(dados);
                             criaGraficoTotalStatus(dados);
@@ -205,18 +217,11 @@
 
                         function criaGraficoStatus(dados) {
                             const statusCount = {};
+                            let totalOS = dados.length;
+
                             dados.forEach(os => {
                                 statusCount[os.status] = (statusCount[os.status] || 0) + 1;
                             });
-
-                            const coresPorStatus = {
-                                'Em orçamento': '#ffc107',
-                                'Aguardando cliente': '#36A2EB',
-                                'Em execução': '#4BC0C0',
-                                'Atendido': '#0d6efd',
-                                'Fechado': '#333333'
-                            };
-                            const coresStatus = Object.keys(statusCount).map(status => coresPorStatus[status] || '#999');
 
                             new Chart(document.getElementById('graficoStatus'), {
                                 type: 'pie',
@@ -225,54 +230,96 @@
                                     datasets: [{
                                         label: 'OS por Status',
                                         data: Object.values(statusCount),
-                                        backgroundColor: coresStatus
+                                        backgroundColor: Object.keys(statusCount).map(s => coresGlobal.status[s] || '#999')
                                     }]
+                                },
+                                options: {
+                                    plugins: {
+                                        tooltip: {
+                                            callbacks: {
+                                                label: function(context) {
+                                                    let label = context.label || '';
+                                                    let value = context.raw || 0;
+                                                    let percentage = totalOS > 0 ? ((value / totalOS) * 100).toFixed(1) : 0;
+                                                    return `${label}: ${value} OS (${percentage}%)`;
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             });
                         }
 
-                        function criaGraficoData(dados) {
-                            const dateCount = {};
-                            dados.forEach(os => {
-                                const data = new Date(os.data_inicio).toLocaleDateString('pt-BR');
-                                dateCount[data] = (dateCount[data] || 0) + 1;
-                            });
+                      function criaGraficoData(dados) {
+                        const dateCount = {};
+                        
+                        // Ordenar os dados por data para a linha não ficar "puxando" para trás e para frente
+                        const dadosOrdenados = [...dados].sort((a, b) => new Date(a.data_inicio) - new Date(b.data_inicio));
 
-                            const coresDatas = Object.keys(dateCount).map(() => {
-                                return `hsl(${Math.random() * 360}, 70%, 60%)`;
-                            });
+                        dadosOrdenados.forEach(os => {
+                            const data = new Date(os.data_inicio).toLocaleDateString('pt-BR');
+                            dateCount[data] = (dateCount[data] || 0) + 1;
+                        });
 
-                            new Chart(document.getElementById('graficoDias'), {
-                                type: 'bar',
-                                data: {
-                                    labels: Object.keys(dateCount),
-                                    datasets: [{
-                                        label: 'OS por Data',
-                                        data: Object.values(dateCount),
-                                        backgroundColor: coresDatas,
-                                    }]
+                        new Chart(document.getElementById('graficoDias'), {
+                            type: 'line',
+                            data: {
+                                labels: Object.keys(dateCount),
+                                datasets: [{
+                                    label: 'Qtd de OS',
+                                    data: Object.values(dateCount),
+                                    borderColor: coresGlobal.pecas, // Cor da linha
+                                    backgroundColor: coresGlobal.pecas + '33', // Cor de fundo leve (opcional)
+                                    borderWidth: 4, // Linha mais grossa
+                                    fill: true, // Preenche a área abaixo da linha
+                                    tension: 0.3, // Curvatura da linha (0 para linha reta)
+                                    pointRadius: 6, // Tamanho dos pontos
+                                    pointBackgroundColor: coresGlobal.pecas,
+                                    pointHoverRadius: 8
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                plugins: {
+                                    legend: {
+                                        display: true,
+                                        position: 'top'
+                                    }
+                                },
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        ticks: {
+                                            // Força o eixo a usar apenas números inteiros
+                                            stepSize: 1,
+                                            callback: function(value) {
+                                                if (Math.floor(value) === value) {
+                                                    return value;
+                                                }
+                                            }
+                                        },
+                                        grid: {
+                                            drawBorder: false
+                                        }
+                                    },
+                                    x: {
+                                        grid: {
+                                            display: false // Remove as linhas verticais para ficar mais limpo
+                                        }
+                                    }
                                 }
-                            });
-                        }
+                            }
+                        });
+                    }
 
                         function criaGraficoTotalStatus(dados) {
                             const totalPorStatus = {};
                             let valorTotalGeral = 0;
 
-                            // Definição das cores dentro da função para evitar erro de escopo
-                            const coresReferencia = {
-                                'Em orçamento': '#ffc107',
-                                'Aguardando cliente': '#36A2EB',
-                                'Em execução': '#4BC0C0',
-                                'Atendido': '#0d6efd',
-                                'Fechado': '#333333'
-                            };
-
                             dados.forEach(os => {
                                 const valor = parseFloat(os.valorTotalGeral) || 0;
-                                const status = os.status;
                                 valorTotalGeral += valor;
-                                totalPorStatus[status] = (totalPorStatus[status] || 0) + valor;
+                                totalPorStatus[os.status] = (totalPorStatus[os.status] || 0) + valor;
                             });
 
                             new Chart(document.getElementById('graficoTotal'), {
@@ -280,10 +327,8 @@
                                 data: {
                                     labels: Object.keys(totalPorStatus),
                                     datasets: [{
-                                        label: 'Total em R$',
                                         data: Object.values(totalPorStatus),
-                                        // Usamos coresReferencia aqui
-                                        backgroundColor: Object.keys(totalPorStatus).map(status => coresReferencia[status] || '#999')
+                                        backgroundColor: Object.keys(totalPorStatus).map(s => coresGlobal.status[s] || '#999')
                                     }]
                                 },
                                 options: {
@@ -295,9 +340,11 @@
                                         },
                                         tooltip: {
                                             callbacks: {
-                                                label: function (context) {
+                                                label: function(context) {
+                                                    let label = context.label || '';
                                                     let value = context.raw || 0;
-                                                    return `${context.label}: R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+                                                    let percentage = valorTotalGeral > 0 ? ((value / valorTotalGeral) * 100).toFixed(1) : 0;
+                                                    return `${label}: R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (${percentage}%)`;
                                                 }
                                             }
                                         }
@@ -307,35 +354,22 @@
                         }
 
                         function criaGraficoItens(dados) {
-                            const itemContagem = {}; // Armazena a quantidade (Qtd)
-                            const itemFinanceiro = {}; // Armazena a soma dos valores (R$)
+                            const itemContagem = {};
+                            const itemFinanceiro = {};
 
                             dados.forEach(os => {
-                                if (os.itens && Array.isArray(os.itens)) {
-                                    os.itens.forEach(item => {
-                                        const nome = item.descricao || "Sem descrição";
-                                        const qtd = parseFloat(item.quantidade) || 0;
-                                        const valorTotal = parseFloat(item.valorTotalItem) || 0;
+                                os.itens?.forEach(item => {
+                                    const nome = item.descricao || "Sem descrição";
+                                    const qtd = parseFloat(item.quantidade) || 0;
+                                    const valorTotal = parseFloat(item.valorTotalItem) || 0;
 
-                                        // Soma as quantidades
-                                        itemContagem[nome] = (itemContagem[nome] || 0) + qtd;
-
-                                        // Soma os valores financeiros
-                                        itemFinanceiro[nome] = (itemFinanceiro[nome] || 0) + valorTotal;
-                                    });
-                                }
+                                    itemContagem[nome] = (itemContagem[nome] || 0) + qtd;
+                                    itemFinanceiro[nome] = (itemFinanceiro[nome] || 0) + valorTotal;
+                                });
                             });
 
-                            // Ordenar pelos 10 itens com maior quantidade
-                            const itensOrdenados = Object.entries(itemContagem)
-                                .sort((a, b) => b[1] - a[1])
-                                .slice(0, 10);
-
+                            const itensOrdenados = Object.entries(itemContagem).sort((a, b) => b[1] - a[1]).slice(0, 10);
                             const labels = itensOrdenados.map(i => i[0]);
-                            const quantidades = itensOrdenados.map(i => i[1]);
-
-                            // Mapeia os valores financeiros correspondentes aos itens do Top 10
-                            const valoresFinanceiros = labels.map(nome => itemFinanceiro[nome]);
 
                             new Chart(document.getElementById('graficoItens'), {
                                 type: 'bar',
@@ -343,38 +377,20 @@
                                     labels: labels,
                                     datasets: [{
                                         label: 'Quantidade Total',
-                                        data: quantidades,
+                                        data: itensOrdenados.map(i => i[1]),
                                         backgroundColor: '#4BC0C0',
-                                        borderColor: '#2e7d7d',
-                                        borderWidth: 1,
-                                        // Armazenamos os valores financeiros aqui para usar no tooltip
-                                        financeiro: valoresFinanceiros
+                                        financeiro: labels.map(nome => itemFinanceiro[nome])
                                     }]
                                 },
                                 options: {
                                     indexAxis: 'y',
-                                    responsive: true,
                                     plugins: {
-                                        title: {
-                                            display: true,
-                                            text: 'Top 10 Itens e Serviços (Quantidade vs Valor)'
-                                        },
                                         tooltip: {
                                             callbacks: {
-                                                // Customização do que aparece ao passar o mouse
                                                 footer: function (context) {
-                                                    const index = context[0].dataIndex;
-                                                    const valorRS = context[0].dataset.financeiro[index];
-                                                    return `Valor Total: R$ ${valorRS.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+                                                    const valorRS = context[0].dataset.financeiro[context[0].dataIndex];
+                                                    return `Valor Acumulado: R$ ${valorRS.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
                                                 }
-                                            }
-                                        }
-                                    },
-                                    scales: {
-                                        x: {
-                                            title: {
-                                                display: true,
-                                                text: 'Quantidade Utilizada'
                                             }
                                         }
                                     }
@@ -383,7 +399,6 @@
                         }
 
                         function criaGraficoComposicao(dados) {
-                            // Filtramos apenas as últimas 15 ou 20 OS para o gráfico não ficar poluído
                             const ultimasOS = dados.slice(0, 15).reverse();
 
                             const labels = ultimasOS.map(os => {
@@ -392,64 +407,35 @@
                             });
 
                             const dadosPecas = ultimasOS.map(os => {
-                                // Soma todos os itens da OS
-                                return os.itens.reduce((acc, item) => acc + (parseFloat(item.valorTotalItem) || 0), 0);
+                                return os.itens.filter(i => i.tipo !== 'Serviço').reduce((acc, item) => acc + (parseFloat(item.valorTotalItem) || 0), 0);
                             });
 
-                            const dadosMaoDeObra = ultimasOS.map(os => parseFloat(os.mao_de_obra) || 0);
+                            const dadosMaoDeObra = ultimasOS.map(os => {
+                                const fixa = parseFloat(os.mao_de_obra) || 0;
+                                const itensServico = os.itens.filter(i => i.tipo === 'Serviço').reduce((acc, item) => acc + (parseFloat(item.valorTotalItem) || 0), 0);
+                                return fixa + itensServico;
+                            });
 
                             new Chart(document.getElementById('graficoComposicao'), {
                                 type: 'bar',
                                 data: {
                                     labels: labels,
                                     datasets: [
-                                        {
-                                            label: 'Peças/Produtos',
-                                            data: dadosPecas,
-                                            backgroundColor: '#007bff',
-                                        },
-                                        {
-                                            label: 'Mão de Obra',
-                                            data: dadosMaoDeObra,
-                                            backgroundColor: '#28a745',
-                                        }
+                                        { label: 'Peças/Produtos', data: dadosPecas, backgroundColor: coresGlobal.pecas },
+                                        { label: 'Mão de Obra', data: dadosMaoDeObra, backgroundColor: coresGlobal.maoDeObra }
                                     ]
                                 },
                                 options: {
                                     responsive: true,
-                                    layout: {
-                                        // 1. Adiciona um preenchimento no topo para o texto não bater na borda
-                                        padding: {
-                                            top: 30
-                                        }
-                                    },
+                                    layout: { padding: { top: 30 } },
                                     scales: {
                                         x: { stacked: true },
-                                        y: {
-                                            stacked: true,
-                                            beginAtZero: true,
-                                            // 2. Aumenta a escala em 15% para garantir espaço para o texto
-                                            grace: '15%',
-                                            ticks: {
-                                                callback: (value) => 'R$ ' + value
-                                            }
-                                        }
+                                        y: { stacked: true, beginAtZero: true, grace: '15%' }
                                     },
                                     plugins: {
-                                        // Garante que a legenda não fique colada no topo das barras
-                                        legend: {
-                                            display: true,
-                                            labels: {
-                                                padding: 20
-                                            }
-                                        },
                                         tooltip: {
                                             callbacks: {
-                                                label: function (context) {
-                                                    let label = context.dataset.label || '';
-                                                    let value = context.parsed.y || 0;
-                                                    return `${label}: R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-                                                }
+                                                label: (c) => `${c.dataset.label}: R$ ${c.parsed.y.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
                                             }
                                         }
                                     }
@@ -462,16 +448,11 @@
                                         ctx.textAlign = 'center';
                                         ctx.font = 'bold 12px Arial';
                                         ctx.fillStyle = '#333';
-
                                         chart.data.labels.forEach((label, index) => {
                                             const total = chart.data.datasets[0].data[index] + chart.data.datasets[1].data[index];
                                             const xPos = x.getPixelForValue(label);
                                             const yPos = y.getPixelForValue(total);
-
-                                            if (total > 0) {
-                                                // Mantemos o pequeno offset de -10 para o texto flutuar sobre a barra
-                                                ctx.fillText(`R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, xPos, yPos - 10);
-                                            }
+                                            if (total > 0) ctx.fillText(`R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, xPos, yPos - 10);
                                         });
                                         ctx.restore();
                                     }
@@ -484,44 +465,41 @@
                             let totalPecas = 0;
 
                             dados.forEach(os => {
-                                // Soma a mão de obra da OS
                                 totalMaoDeObra += parseFloat(os.mao_de_obra) || 0;
-
-                                // Soma todos os itens (peças/serviços) daquela OS
-                                if (os.itens && Array.isArray(os.itens)) {
-                                    totalPecas += os.itens.reduce((acc, item) => acc + (parseFloat(item.valorTotalItem) || 0), 0);
-                                }
+                                os.itens?.forEach(item => {
+                                    if (item.tipo === 'Serviço') {
+                                        totalMaoDeObra += parseFloat(item.valorTotalItem) || 0;
+                                    } else {
+                                        totalPecas += parseFloat(item.valorTotalItem) || 0;
+                                    }
+                                });
                             });
 
-                            const valorTotalGeral = totalMaoDeObra + totalPecas;
+                            const total = totalMaoDeObra + totalPecas;
 
                             new Chart(document.getElementById('graficoGeralComposicao'), {
                                 type: 'pie',
                                 data: {
-                                    labels: ['Mão de Obra', 'Peças / Produtos'],
+                                    labels: ['Mão de Obra', 'Peças'],
                                     datasets: [{
                                         data: [totalMaoDeObra, totalPecas],
-                                        backgroundColor: ['#28a745', '#007bff'], // Rosa para MO, Verde para Peças
-                                        hoverOffset: 10
+                                        backgroundColor: [coresGlobal.maoDeObra, coresGlobal.pecas]
                                     }]
                                 },
                                 options: {
                                     responsive: true,
                                     plugins: {
-                                        legend: {
-                                            position: 'bottom'
-                                        },
-                                        title: {
-                                            display: true,
-                                            text: `Faturamento Total Analisado: R$ ${valorTotalGeral.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                                        title: { 
+                                            display: true, 
+                                            text: `Total: R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` 
                                         },
                                         tooltip: {
                                             callbacks: {
-                                                label: function (context) {
-                                                    const label = context.label || '';
-                                                    const value = context.raw || 0;
-                                                    const porcentagem = ((value / valorTotalGeral) * 100).toFixed(1);
-                                                    return `${label}: R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (${porcentagem}%)`;
+                                                label: function(context) {
+                                                    let label = context.label || '';
+                                                    let value = context.raw || 0;
+                                                    let percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                                    return `${label}: R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (${percentage}%)`;
                                                 }
                                             }
                                         }
@@ -531,46 +509,40 @@
                         }
 
                         function criaGraficoClientesNovos(dados, dataInicioFiltro) {
-                            let novos = 0;
-                            let antigos = 0;
-                            const clientesProcessados = new Set(); // Para não contar o mesmo cliente duas vezes se ele tiver 2 OS
-
-                            // Se não houver data de início no filtro, vamos considerar os últimos 30 dias como padrão
-                            const dataReferencia = dataInicioFiltro ? new Date(dataInicioFiltro) : new Date();
-                            if (!dataInicioFiltro) dataReferencia.setDate(dataReferencia.getDate() - 30);
+                            let novos = 0, antigos = 0;
+                            const clientesProcessados = new Set();
+                            const ref = dataInicioFiltro ? new Date(dataInicioFiltro) : new Date(new Date().setDate(new Date().getDate() - 30));
 
                             dados.forEach(os => {
-                                if (os.cliente && os.cliente._id && !clientesProcessados.has(os.cliente._id)) {
+                                if (os.cliente?._id && !clientesProcessados.has(os.cliente._id)) {
                                     clientesProcessados.add(os.cliente._id);
-
-                                    // Verificamos a data de criação do cliente
-                                    const dataCriacaoCliente = new Date(os.cliente.criadoEm);
-
-                                    if (dataCriacaoCliente >= dataReferencia) {
-                                        novos++;
-                                    } else {
-                                        antigos++;
-                                    }
+                                    new Date(os.cliente.criadoEm) >= ref ? novos++ : antigos++;
                                 }
                             });
+
+                            const totalClientes = novos + antigos;
 
                             new Chart(document.getElementById('graficoNovosClientes'), {
                                 type: 'pie',
                                 data: {
-                                    labels: ['Novos Clientes', 'Clientes Antigos'],
+                                    labels: ['Novos', 'Antigos'],
                                     datasets: [{
                                         data: [novos, antigos],
-                                        backgroundColor: ['#ffc107', '#6c757d'], // Amarelo para novos, Cinza para antigos
+                                        backgroundColor: [coresGlobal.status['Em orçamento'], '#6c757d']
                                     }]
                                 },
                                 options: {
-                                    responsive: true,
                                     plugins: {
-                                        title: {
-                                            display: true,
-                                            text: `Total de Clientes Atendidos: ${novos + antigos}`
-                                        },
-                                        legend: { position: 'bottom' }
+                                        tooltip: {
+                                            callbacks: {
+                                                label: function(context) {
+                                                    let label = context.label || '';
+                                                    let value = context.raw || 0;
+                                                    let percentage = totalClientes > 0 ? ((value / totalClientes) * 100).toFixed(1) : 0;
+                                                    return `${label}: ${value} (${percentage}%)`;
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             });

@@ -10,7 +10,8 @@ const OrdemServicoSchema = new mongoose.Schema({
         descricao: String,
         quantidade: Number,
         valorUnitario: Number,
-        valorTotalItem: Number
+        valorTotalItem: Number,
+        tipo: { type: String, enum: ['Peça', 'Serviço'], default: 'Peça' } // 🔥 Adicionado
     }],
     mao_de_obra: { type: Number, default: 0 },
     valorTotalGeral: { type: Number, default: 0 },
@@ -96,7 +97,8 @@ class OrdemServico {
                 descricao: item.descricao,
                 quantidade: qtd,
                 valorUnitario: valorUn,
-                valorTotalItem: subTotal
+                valorTotalItem: subTotal,
+                tipo: item.tipo || 'Peça' // 🔥 Garante que o tipo seja salvo
             };
         });
 

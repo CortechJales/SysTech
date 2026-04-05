@@ -101,35 +101,30 @@ var OrdemServico = /*#__PURE__*/function () {
     value: function events() {
       var _this = this;
       var btnAdd = this.form.querySelector('#btn-add-item');
-      var inputMaoObra = this.form.querySelector('#mao_obra');
       var corpoItens = this.form.querySelector('#corpo-itens');
       var inputFiltro = this.form.querySelector('#filtro-produto');
-
-      // Lógica do Filtro
       if (inputFiltro) {
         inputFiltro.addEventListener('input', function (e) {
           return _this.filtrarPeças(e.target.value);
         });
       }
-
-      // Adicionar Item
       if (btnAdd) {
         btnAdd.addEventListener('click', function () {
           return _this.addItem();
         });
       }
-
-      // Monitorar Mudanças (Mão de Obra, Qtd ou Preço manual)
       this.form.addEventListener('input', function (e) {
         if (e.target.id === 'mao_obra' || e.target.classList.contains('input-qtd') || e.target.classList.contains('input-valor')) {
           _this.calcTotalGeral();
         }
       });
 
-      // Remover Item
+      // CORREÇÃO AQUI: Delegação de evento melhorada
       corpoItens.addEventListener('click', function (e) {
-        if (e.target.classList.contains('btn-remover')) {
-          e.target.closest('tr').remove();
+        // Verifica se clicou no botão ou no ícone dentro dele
+        var btnDelete = e.target.closest('.btn-remover');
+        if (btnDelete) {
+          btnDelete.closest('tr').remove();
           _this.calcTotalGeral();
         }
       });
@@ -137,67 +132,73 @@ var OrdemServico = /*#__PURE__*/function () {
   }, {
     key: "filtrarPe\xE7as",
     value: function filtrarPeças(termo) {
+      var _select$options$selec;
       var select = this.form.querySelector('#sel-prod');
       var options = select.querySelectorAll('option');
       var busca = termo.toLowerCase();
       options.forEach(function (opt) {
         if (opt.value === "") return;
-        var textoBusca = opt.getAttribute('data-search');
-        // Exibe se encontrar o código ou a descrição
+        var textoBusca = opt.getAttribute('data-search') || "";
         opt.style.display = textoBusca.includes(busca) ? 'block' : 'none';
       });
-
-      // Reseta o select para a primeira opção válida se a atual sumir
-      if (select.options[select.selectedIndex].style.display === 'none') {
+      if (((_select$options$selec = select.options[select.selectedIndex]) === null || _select$options$selec === void 0 ? void 0 : _select$options$selec.style.display) === 'none') {
         select.value = "";
       }
     }
   }, {
     key: "addItem",
     value: function addItem() {
-      var _select$options$selec;
       var select = this.form.querySelector('#sel-prod');
       var inputQtd = this.form.querySelector('#sel-qtd');
       var corpoItens = this.form.querySelector('#corpo-itens');
+
+      // Pega a opção que está selecionada no momento
+      var selectedOption = select.options[select.selectedIndex];
       var descricao = select.value;
-      var valorUnitario = (_select$options$selec = select.options[select.selectedIndex]) === null || _select$options$selec === void 0 ? void 0 : _select$options$selec.dataset.valor;
-      var quantidade = inputQtd.value;
-      if (!descricao || !quantidade || quantidade <= 0) return;
+      var valorUnitario = parseFloat(selectedOption === null || selectedOption === void 0 ? void 0 : selectedOption.dataset.valor) || 0;
+
+      // 🔥 AQUI ESTÁ O SEGREDO: 
+      // No EJS você colocou data-tipo="<%= p.tipo %>", então aqui usamos dataset.tipo
+      var tipo = (selectedOption === null || selectedOption === void 0 ? void 0 : selectedOption.dataset.tipo) || 'Peça';
+      var quantidade = parseInt(inputQtd.value) || 0;
+      if (!descricao || quantidade <= 0) return;
       var tr = document.createElement('tr');
-      tr.innerHTML = "\n        <td><input type=\"hidden\" name=\"itens[".concat(this.index, "][descricao]\" value=\"").concat(descricao, "\">").concat(descricao, "</td>\n        <td><input type=\"number\" name=\"itens[").concat(this.index, "][quantidade]\" class=\"form-control form-control-sm input-qtd\" value=\"").concat(quantidade, "\"></td>\n        <td><input type=\"number\" step=\"0.01\" name=\"itens[").concat(this.index, "][valorUnitario]\" class=\"form-control form-control-sm input-valor\" value=\"").concat(valorUnitario, "\"></td>\n        <td class=\"subtotal-item fw-bold\">R$ ").concat((valorUnitario * quantidade).toFixed(2), "</td>\n        <td><button type=\"button\" class=\"btn btn-sm text-danger btn-remover\">X</button></td>\n    ");
+      tr.innerHTML = "\n        <td>\n          <input type=\"hidden\" name=\"itens[".concat(this.index, "][descricao]\" value=\"").concat(descricao, "\">\n          <input type=\"hidden\" name=\"itens[").concat(this.index, "][tipo]\" value=\"").concat(tipo, "\" class=\"input-tipo\">\n          ").concat(descricao, " <small class=\"badge bg-light text-dark border\">").concat(tipo, "</small>\n        </td>\n        <td>\n          <input type=\"number\" name=\"itens[").concat(this.index, "][quantidade]\" class=\"form-control form-control-sm input-qtd\" value=\"").concat(quantidade, "\">\n        </td>\n        <td>\n          <div class=\"input-group input-group-sm\">\n            <span class=\"input-group-text\">R$</span>\n            <input type=\"number\" step=\"0.01\" name=\"itens[").concat(this.index, "][valorUnitario]\" class=\"form-control input-valor\" value=\"").concat(valorUnitario.toFixed(2), "\">\n          </div>\n        </td>\n        <td class=\"subtotal-item fw-bold\">R$ ").concat((valorUnitario * quantidade).toFixed(2), "</td>\n        <td>\n          <button type=\"button\" class=\"btn btn-sm btn-outline-danger btn-remover border-0\">\n            <i class=\"bi bi-trash\"></i>\n          </button>\n        </td>\n    ");
       corpoItens.appendChild(tr);
       this.index++;
       this.calcTotalGeral();
 
-      // Limpa o filtro após adicionar
-      var inputFiltro = this.form.querySelector('#filtro-produto');
-      inputFiltro.value = '';
-      this.filtrarPeças('');
+      // Limpa campos
+      select.value = '';
+      inputQtd.value = 1;
     }
   }, {
     key: "calcTotalGeral",
     value: function calcTotalGeral() {
       var inputMaoObra = this.form.querySelector('#mao_obra');
       var displayTotalGeral = this.form.querySelector('#total_exibido');
-      var displayTotalPecas = this.form.querySelector('#total_pecas'); // Novo campo
-
+      var displayTotalPecas = this.form.querySelector('#total_pecas');
       var totalPecas = 0;
-      var maoDeObra = parseFloat(inputMaoObra === null || inputMaoObra === void 0 ? void 0 : inputMaoObra.value) || 0;
+      var totalServicosTabela = 0;
+      var maoDeObraFixa = parseFloat(inputMaoObra === null || inputMaoObra === void 0 ? void 0 : inputMaoObra.value) || 0;
       var linhas = this.form.querySelectorAll('#corpo-itens tr');
       linhas.forEach(function (linha) {
+        var _linha$querySelector;
         var qtd = parseFloat(linha.querySelector('.input-qtd').value) || 0;
         var valorUn = parseFloat(linha.querySelector('.input-valor').value) || 0;
+        var tipo = ((_linha$querySelector = linha.querySelector('.input-tipo')) === null || _linha$querySelector === void 0 ? void 0 : _linha$querySelector.value) || 'Peça';
         var subtotal = qtd * valorUn;
-        linha.querySelector('.subtotal-item').innerText = "R$ ".concat(subtotal.toFixed(2));
-        totalPecas += subtotal; // Soma apenas os produtos
+        var subtotalDisplay = linha.querySelector('.subtotal-item');
+        if (subtotalDisplay) subtotalDisplay.innerText = "R$ ".concat(subtotal.toFixed(2));
+        if (tipo === 'Serviço') {
+          totalServicosTabela += subtotal;
+        } else {
+          totalPecas += subtotal;
+        }
       });
-
-      // Atualiza o total das peças na tabela
       if (displayTotalPecas) displayTotalPecas.innerText = totalPecas.toFixed(2);
-
-      // Atualiza o total geral (Peças + Mão de Obra)
       if (displayTotalGeral) {
-        var totalGeral = totalPecas + maoDeObra;
+        var totalGeral = totalPecas + totalServicosTabela + maoDeObraFixa;
         displayTotalGeral.innerText = totalGeral.toFixed(2);
       }
     }

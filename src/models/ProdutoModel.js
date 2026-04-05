@@ -5,6 +5,12 @@ const ProdutoSchema = new mongoose.Schema({
     codigo: { type: Number },
     descricao: { type: String, required: true },
     valorVenda: { type: Number, required: true },
+    tipo: { 
+        type: String, 
+        enum: ['Peça', 'Serviço'], 
+        default: 'Peça',
+        required: true 
+    },
     ativo: { type: Boolean, default: true } 
 });
 
@@ -62,6 +68,7 @@ class Produto {
         this.cleanUp();
         if (!this.body.descricao) this.errors.push('Descrição é obrigatória');
         if (isNaN(parseFloat(this.body.valorVenda))) this.errors.push('Valor Venda precisa ser um número');
+        if (!['Peça', 'Serviço'].includes(this.body.tipo)) this.errors.push('Tipo inválido selecionado');
     }
 
     cleanUp() {
@@ -71,7 +78,8 @@ class Produto {
         
         this.body = {
             descricao: this.body.descricao,
-            valorVenda: parseFloat(this.body.valorVenda) || 0
+            valorVenda: parseFloat(this.body.valorVenda) || 0,
+            tipo: this.body.tipo || 'Peça' // 🔥 Garante o valor do tipo
         };
     }
 

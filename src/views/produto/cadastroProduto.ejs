@@ -53,8 +53,16 @@
                      value="<%= produto.descricao %>" 
                      class="form-control" 
                      name="descricao" 
-                     placeholder="Ex: Rolamento 6203 ZZ" 
+                     placeholder='Ex: Tela 15,6"' 
                      required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold">Tipo do Item</label>
+              <select class="form-select" name="tipo" required>
+                <option value="Peça" <%= produto.tipo === 'Peça' ? 'selected' : '' %>>📦 Peça / Produto</option>
+                <option value="Serviço" <%= produto.tipo === 'Serviço' ? 'selected' : '' %>>🛠️ Serviço / Mão de Obra</option>
+              </select>
+              <small class="text-muted">Isso define como o item aparecerá nos relatórios financeiros.</small>
             </div>
 
             <hr class="my-4">

@@ -63,7 +63,11 @@
                         <select id="sel-prod" class="form-select" <%= isFechado ? 'disabled' : '' %>>
                             <option value="">-- Selecione o item --</option>
                             <% produtos.forEach(p => { %>
-                                <option value="<%= p.descricao %>" data-valor="<%= p.valorVenda %>" data-search="<%= p.codigo %> <%= p.descricao.toLowerCase() %>">
+                                <!-- Adicionado data-tipo -->
+                                <option value="<%= p.descricao %>" 
+                                        data-valor="<%= p.valorVenda %>" 
+                                        data-tipo="<%= p.tipo %>" 
+                                        data-search="<%= p.codigo %> <%= p.descricao.toLowerCase() %>">
                                     #<%= p.codigo %> - <%= p.descricao %> (R$ <%= p.valorVenda.toFixed(2) %>)
                                 </option>
                             <% }) %>
@@ -97,7 +101,9 @@
                                 <tr>
                                     <td>
                                         <input type="hidden" name="itens[<%=i%>][descricao]" value="<%=item.descricao%>">
-                                        <%=item.descricao%>
+                                        <input type="hidden" name="itens[<%=i%>][tipo]" value="<%=item.tipo%>"> <!-- 🔥 Adicionado -->
+                                        <%=item.descricao%> 
+                                        <small class="badge bg-light text-dark border"><%= item.tipo %></small> <!-- Visual -->
                                     </td>
                                     <td>
                                         <input type="number" name="itens[<%=i%>][quantidade]" class="form-control form-control-sm input-qtd" value="<%=item.quantidade%>" <%= isFechado ? 'readonly' : '' %>>

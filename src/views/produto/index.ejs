@@ -16,6 +16,7 @@
                     <thead class="table-dark text-nowrap">
                         <tr>
                             <th width="80">Código</th>
+                            <th>Tipo</th>
                             <th>Descrição</th>
                             <th>Valor de Venda</th>
                             <th class="text-center">Status</th>
@@ -27,6 +28,11 @@
                             <% produtos.forEach(p => { %>
                                 <tr>
                                     <td class="fw-bold text-primary">#<%= p.codigo %></td>
+                                    <td>
+                                        <span class="badge <%= p.tipo === 'Serviço' ? 'bg-info text-dark' : 'bg-secondary' %>">
+                                            <%= p.tipo %>
+                                        </span>
+                                    </td>
                                     <td><%= p.descricao %></td>
                                     <td>R$ <%= Number(p.valorVenda).toFixed(2) %></td>
                                     <td class="text-center">

@@ -2,7 +2,7 @@ const { Produto } = require('../models/ProdutoModel');
 const { connectLocal } = require('../db/connections');
 
 exports.index = (req, res) => {
-    res.render('produto/cadastroProduto', { produto: {} });
+    res.render('produto/cadastroProduto', { produto: { tipo: 'Peça' } });
 };
 
 exports.list = async (req, res) => {
