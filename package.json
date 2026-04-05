@@ -12,8 +12,10 @@
     "dev": "webpack -w",
     "build": "electron-builder"
   },
-   "build": {
-    "extraResources": [".env"],
+  "build": {
+    "extraResources": [
+      ".env"
+    ],
     "appId": "com.corturato.systech",
     "productName": "SysTech",
     "directories": {
@@ -37,6 +39,7 @@
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
+    "chart.js": "^4.5.1",
     "connect-flash": "^0.1.1",
     "connect-mongo": "^6.0.0",
     "core-js": "^3.48.0",

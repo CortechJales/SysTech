@@ -1,138 +1,583 @@
 <%- include('../includes/head') %>
-<%- include('../includes/nav') %>
+    <%- include('../includes/nav') %>
 
-<div class="container my-4">
-    <div class="card shadow-sm border-0">
-        <div class="card-body p-4">
-            <h1 class="h3 fw-bold mb-4">Histórico de Ordens de Serviço</h1>
+        <div class="container my-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <h1 class="h3 fw-bold mb-4">Histórico de Ordens de Serviço</h1>
 
-            <!-- Filtros -->
-            <form action="/relatorio" method="POST" class="row g-3 mb-4">
-                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                
-                <!-- Data Início -->
-                <div class="col-md-3">
-                    <label class="form-label">Data Início</label>
-                    <input type="date" name="dataInicio" class="form-control" value="<%= filtros.dataInicio %>">
-                </div>
+                    <!-- Filtros -->
+                    <form action="/relatorio" method="POST" class="row g-3 mb-4">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
-                <!-- Data Fim -->
-                <div class="col-md-3">
-                    <label class="form-label">Data Fim</label>
-                    <input type="date" name="dataFim" class="form-control" value="<%= filtros.dataFim %>">
-                </div>
-
-                <!-- Cliente -->
-                <div class="col-md-3">
-                    <label class="form-label">Cliente</label>
-                    <input type="text" name="nomeCliente" class="form-control" value="<%= filtros.nomeCliente %>">
-                </div>
-
-                <!-- Equipamento -->
-                <div class="col-md-3">
-                    <label class="form-label">Equipamento</label>
-                    <input type="text" name="equipamento" class="form-control" value="<%= filtros.equipamento %>">
-                </div>
-
-                <!-- Valor Mínimo -->
-                <div class="col-md-3">
-                    <label class="form-label">Valor Mínimo (R$)</label>
-                    <input type="number" name="valorMin" step="0.01" class="form-control" value="<%= filtros.valorMin %>">
-                </div>
-
-                <!-- Valor Máximo -->
-                <div class="col-md-3">
-                    <label class="form-label">Valor Máximo (R$)</label>
-                    <input type="number" name="valorMax" step="0.01" class="form-control" value="<%= filtros.valorMax %>">
-                </div>
-
-                <!-- Item -->
-                <div class="col-md-3">
-                    <label class="form-label">Item</label>
-                    <input type="text" name="item" class="form-control" value="<%= filtros.item %>">
-                </div>
-
-                <!-- Status -->
-                <div class="col-md-3">
-                    <label class="form-label d-block">Status</label>
-                    <% const statusOptions = ['Em orçamento', 'Aguardando cliente', 'Em execution', 'Atendido', 'Fechado']; %>
-                    <% statusOptions.forEach(statusOption => { %>
-                        <div class="form-check form-check-inline">
-                            <input 
-                                class="form-check-input" 
-                                type="checkbox" 
-                                name="status" 
-                                value="<%= statusOption %>" 
-                                id="status-<%= statusOption.replace(/\s+/g, '') %>"
-                                <%= filtros.status.includes(statusOption) ? 'checked' : '' %>>
-                            <label class="form-check-label" for="status-<%= statusOption.replace(/\s+/g, '') %>">
-                                <%= statusOption %>
-                            </label>
+                        <!-- Data Início -->
+                        <div class="col-md-3">
+                            <label class="form-label">Data Início</label>
+                            <input type="date" name="dataInicio" class="form-control" value="<%= filtros.dataInicio %>">
                         </div>
-                    <% }); %>
-                </div>
 
-                <!-- Botões -->
-                <div class="col-12 mt-2">
-                    <button type="submit" class="btn btn-primary">Filtrar</button>
-                    <a href="/relatorio" class="btn btn-outline-secondary">Limpar</a>
-                </div>
-            </form>
+                        <!-- Data Fim -->
+                        <div class="col-md-3">
+                            <label class="form-label">Data Fim</label>
+                            <input type="date" name="dataFim" class="form-control" value="<%= filtros.dataFim %>">
+                        </div>
 
-            <!-- Tabela de resultados -->
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead class="table-dark text-nowrap">
-                        <tr>
-                            <th>Início</th>
-                            <th>Cliente</th>
-                            <th>Equipamento</th>
-                            <th>Status</th>
-                            <th>Aprovado em</th>
-                            <th>Valor Total</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% if (dados && dados.length > 0) { %>
-                            <% dados.forEach(os => { %>
+                        <!-- Cliente -->
+                        <div class="col-md-3">
+                            <label class="form-label">Cliente</label>
+                            <input type="text" name="nomeCliente" class="form-control"
+                                value="<%= filtros.nomeCliente %>">
+                        </div>
+
+                        <!-- Equipamento -->
+                        <div class="col-md-3">
+                            <label class="form-label">Equipamento</label>
+                            <input type="text" name="equipamento" class="form-control"
+                                value="<%= filtros.equipamento %>">
+                        </div>
+
+                        <!-- Valor Mínimo -->
+                        <div class="col-md-3">
+                            <label class="form-label">Valor Mínimo (R$)</label>
+                            <input type="number" name="valorMin" step="0.01" class="form-control"
+                                value="<%= filtros.valorMin %>">
+                        </div>
+
+                        <!-- Valor Máximo -->
+                        <div class="col-md-3">
+                            <label class="form-label">Valor Máximo (R$)</label>
+                            <input type="number" name="valorMax" step="0.01" class="form-control"
+                                value="<%= filtros.valorMax %>">
+                        </div>
+
+                        <!-- Item -->
+                        <div class="col-md-3">
+                            <label class="form-label">Item</label>
+                            <input type="text" name="item" class="form-control" value="<%= filtros.item %>">
+                        </div>
+
+                        <!-- Status -->
+                        <div class="col-md-3">
+                            <label class="form-label d-block **fw-bold**">Status</label>
+                            <div class="row">
+                                <% const statusOptions=['Em orçamento', 'Aguardando cliente' , 'Em execução'
+                                    , 'Atendido' , 'Fechado' ]; %>
+                                    <% statusOptions.forEach(statusOption=> { %>
+                                        <div class="col-12"> <!-- Mude para col-6 se quiser duas colunas lado a lado -->
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="status"
+                                                    value="<%= statusOption %>"
+                                                    id="status-<%= statusOption.replace(/\s+/g, '') %>"
+                                                    <%=filtros.status.includes(statusOption) ? 'checked' : '' %>>
+                                                <label class="form-check-label"
+                                                    for="status-<%= statusOption.replace(/\s+/g, '') %>">
+                                                    <%= statusOption %>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <% }); %>
+                            </div>
+                        </div>
+
+                        <!-- Botões -->
+                        <div class="col-12 mt-2">
+                            <button type="submit" class="btn btn-primary">Filtrar</button>
+                            <a href="/relatorio" class="btn btn-outline-secondary">Limpar</a>
+                        </div>
+                    </form>
+
+                    <!-- Tabela de resultados -->
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-dark text-nowrap">
                                 <tr>
-                                    <td class="small">
-                                        <%= os.data_inicio ? new Date(os.data_inicio).toLocaleDateString('pt-BR') : '--' %>
-                                    </td>
-                                    <td><strong><%= os.cliente?.nome || '-' %></strong></td>
-                                    <td class="small"><%= os.equipamento?.modelo || '-' %></td>
-                                    <td>
-                                        <span class="badge rounded-pill 
+                                    <th>Início</th>
+                                    <th>Cliente</th>
+                                    <th>Equipamento</th>
+                                    <th>Status</th>
+                                    <th>Aprovado em</th>
+                                    <th>Valor Total</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% if (dados && dados.length> 0) { %>
+                                    <% dados.forEach(os=> { %>
+                                        <tr>
+                                            <td class="small">
+                                                <%= os.data_inicio ? new
+                                                    Date(os.data_inicio).toLocaleDateString('pt-BR') : '--' %>
+                                            </td>
+                                            <td><strong>
+                                                    <%= os.cliente?.nome || '-' %>
+                                                </strong></td>
+                                            <td class="small">
+                                                <%= os.equipamento?.modelo || '-' %>
+                                            </td>
+                                            <td>
+                                                <span class="badge rounded-pill 
                                             <%= os.status === 'Em orçamento' ? 'bg-warning text-dark' : 
                                                 os.status === 'Fechado' ? 'bg-dark' : 'bg-primary' %>">
-                                            <%= os.status %>
-                                        </span>
-                                    </td>
-                                    <td class="small text-muted text-center">
-                                        <%= os.data_orcamento_aprovado ? new Date(os.data_orcamento_aprovado).toLocaleDateString('pt-BR') : '-' %>
-                                    </td>
-                                    <td class="fw-bold">
-                                        R$ <%= (os.valorTotalGeral || 0).toFixed(2) %>
-                                    </td>
-                                    <td>
-                                        <a href="/os/load/<%= os._id %>" class="btn btn-sm btn-outline-primary">
-                                            Abrir
-                                        </a>
-                                    </td>
-                                </tr>
-                            <% }) %>
-                        <% } else { %>
-                            <tr>
-                                <td colspan="7" class="text-center text-muted">Nenhum resultado encontrado</td>
-                            </tr>
-                        <% } %>
-                    </tbody>
-                </table>
+                                                    <%= os.status %>
+                                                </span>
+                                            </td>
+                                            <td class="small text-muted text-center">
+                                                <%= os.data_orcamento_aprovado ? new
+                                                    Date(os.data_orcamento_aprovado).toLocaleDateString('pt-BR') : '-'
+                                                    %>
+                                            </td>
+                                            <td class="fw-bold">
+                                                R$ <%= (os.valorTotalGeral || 0).toFixed(2) %>
+                                            </td>
+                                            <td>
+                                                <a href="/os/load/<%= os._id %>" class="btn btn-sm btn-outline-primary">
+                                                    Abrir
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        <% }) %>
+                                            <% } else { %>
+                                                <tr>
+                                                    <td colspan="7" class="text-center text-muted">Nenhum resultado
+                                                        encontrado</td>
+                                                </tr>
+                                                <% } %>
+                            </tbody>
+                            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+                        </table>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-3 mb-5">
+                            <h5 class="text-center">Relação de OS por status</h5>
+                            <canvas id="graficoStatus"></canvas>
+                        </div>
+
+                        <div class="col-md-9 mb-5">
+                            <h5 class="text-center">Serviços realizados por dia</h5>
+                            <canvas id="graficoDias"></canvas>
+                        </div>
+                        <div class="col-md-4 ">
+                            <h5 class="text-center">Faturamento por Status OS</h5>
+                            <canvas id="graficoTotal"></canvas>
+                        </div>
+                        <div class="col-md-8 mb-5">
+                            <h5 class="text-center">Serviços/troca mais realizados</h5>
+                            <canvas id="graficoItens"></canvas>
+                        </div>
+                        <div class="col-md-12 mb-5">
+                            <h5 class="text-center">Composição de Faturamento por OS (Peças vs Mão de Obra)</h5>
+                            <canvas id="graficoComposicao"></canvas>
+                        </div>
+                        <div class="col-md-6 mb-5">
+                            <h5 class="text-center">Distribuição Geral: Mão de Obra vs Peças</h5>
+                            <canvas id="graficoGeralComposicao"></canvas>
+                        </div>
+                        <div class="col-md-6 mb-5">
+                            <h5 class="text-center">Novos Clientes vs. Clientes Antigos</h5>
+                            <canvas id="graficoNovosClientes"></canvas>
+                        </div>
+                    </div>
+                    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+                    <script id="dados-json" type="application/json">
+                        <%- JSON.stringify(dados || []) %>
+                    </script>
+
+                    <script>
+                        geraGraficos();
+
+                        function geraGraficos() {
+                            const dados = JSON.parse(
+                                document.getElementById('dados-json').textContent
+                            );
+                            const dataInicioFiltro = document.getElementsByName('dataInicio')[0].value;
+
+                            //chama função para gerar gráficos
+                            criaGraficoStatus(dados);
+                            criaGraficoData(dados);
+                            criaGraficoTotalStatus(dados);
+                            criaGraficoItens(dados);
+                            criaGraficoComposicao(dados);
+                            criaGraficoGeralComposicao(dados);
+                            criaGraficoClientesNovos(dados, dataInicioFiltro);
+                        };
+
+                        function criaGraficoStatus(dados) {
+                            const statusCount = {};
+                            dados.forEach(os => {
+                                statusCount[os.status] = (statusCount[os.status] || 0) + 1;
+                            });
+
+                            const coresPorStatus = {
+                                'Em orçamento': '#ffc107',
+                                'Aguardando cliente': '#36A2EB',
+                                'Em execução': '#4BC0C0',
+                                'Atendido': '#0d6efd',
+                                'Fechado': '#333333'
+                            };
+                            const coresStatus = Object.keys(statusCount).map(status => coresPorStatus[status] || '#999');
+
+                            new Chart(document.getElementById('graficoStatus'), {
+                                type: 'pie',
+                                data: {
+                                    labels: Object.keys(statusCount),
+                                    datasets: [{
+                                        label: 'OS por Status',
+                                        data: Object.values(statusCount),
+                                        backgroundColor: coresStatus
+                                    }]
+                                }
+                            });
+                        }
+
+                        function criaGraficoData(dados) {
+                            const dateCount = {};
+                            dados.forEach(os => {
+                                const data = new Date(os.data_inicio).toLocaleDateString('pt-BR');
+                                dateCount[data] = (dateCount[data] || 0) + 1;
+                            });
+
+                            const coresDatas = Object.keys(dateCount).map(() => {
+                                return `hsl(${Math.random() * 360}, 70%, 60%)`;
+                            });
+
+                            new Chart(document.getElementById('graficoDias'), {
+                                type: 'bar',
+                                data: {
+                                    labels: Object.keys(dateCount),
+                                    datasets: [{
+                                        label: 'OS por Data',
+                                        data: Object.values(dateCount),
+                                        backgroundColor: coresDatas,
+                                    }]
+                                }
+                            });
+                        }
+
+                        function criaGraficoTotalStatus(dados) {
+                            const totalPorStatus = {};
+                            let valorTotalGeral = 0;
+
+                            // Definição das cores dentro da função para evitar erro de escopo
+                            const coresReferencia = {
+                                'Em orçamento': '#ffc107',
+                                'Aguardando cliente': '#36A2EB',
+                                'Em execução': '#4BC0C0',
+                                'Atendido': '#0d6efd',
+                                'Fechado': '#333333'
+                            };
+
+                            dados.forEach(os => {
+                                const valor = parseFloat(os.valorTotalGeral) || 0;
+                                const status = os.status;
+                                valorTotalGeral += valor;
+                                totalPorStatus[status] = (totalPorStatus[status] || 0) + valor;
+                            });
+
+                            new Chart(document.getElementById('graficoTotal'), {
+                                type: 'doughnut',
+                                data: {
+                                    labels: Object.keys(totalPorStatus),
+                                    datasets: [{
+                                        label: 'Total em R$',
+                                        data: Object.values(totalPorStatus),
+                                        // Usamos coresReferencia aqui
+                                        backgroundColor: Object.keys(totalPorStatus).map(status => coresReferencia[status] || '#999')
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    plugins: {
+                                        title: {
+                                            display: true,
+                                            text: `Faturamento Total: R$ ${valorTotalGeral.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                                        },
+                                        tooltip: {
+                                            callbacks: {
+                                                label: function (context) {
+                                                    let value = context.raw || 0;
+                                                    return `${context.label}: R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        }
+
+                        function criaGraficoItens(dados) {
+                            const itemContagem = {}; // Armazena a quantidade (Qtd)
+                            const itemFinanceiro = {}; // Armazena a soma dos valores (R$)
+
+                            dados.forEach(os => {
+                                if (os.itens && Array.isArray(os.itens)) {
+                                    os.itens.forEach(item => {
+                                        const nome = item.descricao || "Sem descrição";
+                                        const qtd = parseFloat(item.quantidade) || 0;
+                                        const valorTotal = parseFloat(item.valorTotalItem) || 0;
+
+                                        // Soma as quantidades
+                                        itemContagem[nome] = (itemContagem[nome] || 0) + qtd;
+
+                                        // Soma os valores financeiros
+                                        itemFinanceiro[nome] = (itemFinanceiro[nome] || 0) + valorTotal;
+                                    });
+                                }
+                            });
+
+                            // Ordenar pelos 10 itens com maior quantidade
+                            const itensOrdenados = Object.entries(itemContagem)
+                                .sort((a, b) => b[1] - a[1])
+                                .slice(0, 10);
+
+                            const labels = itensOrdenados.map(i => i[0]);
+                            const quantidades = itensOrdenados.map(i => i[1]);
+
+                            // Mapeia os valores financeiros correspondentes aos itens do Top 10
+                            const valoresFinanceiros = labels.map(nome => itemFinanceiro[nome]);
+
+                            new Chart(document.getElementById('graficoItens'), {
+                                type: 'bar',
+                                data: {
+                                    labels: labels,
+                                    datasets: [{
+                                        label: 'Quantidade Total',
+                                        data: quantidades,
+                                        backgroundColor: '#4BC0C0',
+                                        borderColor: '#2e7d7d',
+                                        borderWidth: 1,
+                                        // Armazenamos os valores financeiros aqui para usar no tooltip
+                                        financeiro: valoresFinanceiros
+                                    }]
+                                },
+                                options: {
+                                    indexAxis: 'y',
+                                    responsive: true,
+                                    plugins: {
+                                        title: {
+                                            display: true,
+                                            text: 'Top 10 Itens e Serviços (Quantidade vs Valor)'
+                                        },
+                                        tooltip: {
+                                            callbacks: {
+                                                // Customização do que aparece ao passar o mouse
+                                                footer: function (context) {
+                                                    const index = context[0].dataIndex;
+                                                    const valorRS = context[0].dataset.financeiro[index];
+                                                    return `Valor Total: R$ ${valorRS.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+                                                }
+                                            }
+                                        }
+                                    },
+                                    scales: {
+                                        x: {
+                                            title: {
+                                                display: true,
+                                                text: 'Quantidade Utilizada'
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        }
+
+                        function criaGraficoComposicao(dados) {
+                            // Filtramos apenas as últimas 15 ou 20 OS para o gráfico não ficar poluído
+                            const ultimasOS = dados.slice(0, 15).reverse();
+
+                            const labels = ultimasOS.map(os => {
+                                const data = new Date(os.data_inicio).toLocaleDateString('pt-BR');
+                                return `${os.cliente?.nome.split(' ')[0] || 'S/N'} (${data})`;
+                            });
+
+                            const dadosPecas = ultimasOS.map(os => {
+                                // Soma todos os itens da OS
+                                return os.itens.reduce((acc, item) => acc + (parseFloat(item.valorTotalItem) || 0), 0);
+                            });
+
+                            const dadosMaoDeObra = ultimasOS.map(os => parseFloat(os.mao_de_obra) || 0);
+
+                            new Chart(document.getElementById('graficoComposicao'), {
+                                type: 'bar',
+                                data: {
+                                    labels: labels,
+                                    datasets: [
+                                        {
+                                            label: 'Peças/Produtos',
+                                            data: dadosPecas,
+                                            backgroundColor: '#007bff',
+                                        },
+                                        {
+                                            label: 'Mão de Obra',
+                                            data: dadosMaoDeObra,
+                                            backgroundColor: '#28a745',
+                                        }
+                                    ]
+                                },
+                                options: {
+                                    responsive: true,
+                                    layout: {
+                                        // 1. Adiciona um preenchimento no topo para o texto não bater na borda
+                                        padding: {
+                                            top: 30
+                                        }
+                                    },
+                                    scales: {
+                                        x: { stacked: true },
+                                        y: {
+                                            stacked: true,
+                                            beginAtZero: true,
+                                            // 2. Aumenta a escala em 15% para garantir espaço para o texto
+                                            grace: '15%',
+                                            ticks: {
+                                                callback: (value) => 'R$ ' + value
+                                            }
+                                        }
+                                    },
+                                    plugins: {
+                                        // Garante que a legenda não fique colada no topo das barras
+                                        legend: {
+                                            display: true,
+                                            labels: {
+                                                padding: 20
+                                            }
+                                        },
+                                        tooltip: {
+                                            callbacks: {
+                                                label: function (context) {
+                                                    let label = context.dataset.label || '';
+                                                    let value = context.parsed.y || 0;
+                                                    return `${label}: R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                plugins: [{
+                                    id: 'datalabels',
+                                    afterDraw: (chart) => {
+                                        const { ctx, scales: { x, y } } = chart;
+                                        ctx.save();
+                                        ctx.textAlign = 'center';
+                                        ctx.font = 'bold 12px Arial';
+                                        ctx.fillStyle = '#333';
+
+                                        chart.data.labels.forEach((label, index) => {
+                                            const total = chart.data.datasets[0].data[index] + chart.data.datasets[1].data[index];
+                                            const xPos = x.getPixelForValue(label);
+                                            const yPos = y.getPixelForValue(total);
+
+                                            if (total > 0) {
+                                                // Mantemos o pequeno offset de -10 para o texto flutuar sobre a barra
+                                                ctx.fillText(`R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, xPos, yPos - 10);
+                                            }
+                                        });
+                                        ctx.restore();
+                                    }
+                                }]
+                            });
+                        }
+
+                        function criaGraficoGeralComposicao(dados) {
+                            let totalMaoDeObra = 0;
+                            let totalPecas = 0;
+
+                            dados.forEach(os => {
+                                // Soma a mão de obra da OS
+                                totalMaoDeObra += parseFloat(os.mao_de_obra) || 0;
+
+                                // Soma todos os itens (peças/serviços) daquela OS
+                                if (os.itens && Array.isArray(os.itens)) {
+                                    totalPecas += os.itens.reduce((acc, item) => acc + (parseFloat(item.valorTotalItem) || 0), 0);
+                                }
+                            });
+
+                            const valorTotalGeral = totalMaoDeObra + totalPecas;
+
+                            new Chart(document.getElementById('graficoGeralComposicao'), {
+                                type: 'pie',
+                                data: {
+                                    labels: ['Mão de Obra', 'Peças / Produtos'],
+                                    datasets: [{
+                                        data: [totalMaoDeObra, totalPecas],
+                                        backgroundColor: ['#28a745', '#007bff'], // Rosa para MO, Verde para Peças
+                                        hoverOffset: 10
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    plugins: {
+                                        legend: {
+                                            position: 'bottom'
+                                        },
+                                        title: {
+                                            display: true,
+                                            text: `Faturamento Total Analisado: R$ ${valorTotalGeral.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                                        },
+                                        tooltip: {
+                                            callbacks: {
+                                                label: function (context) {
+                                                    const label = context.label || '';
+                                                    const value = context.raw || 0;
+                                                    const porcentagem = ((value / valorTotalGeral) * 100).toFixed(1);
+                                                    return `${label}: R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (${porcentagem}%)`;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        }
+
+                        function criaGraficoClientesNovos(dados, dataInicioFiltro) {
+                            let novos = 0;
+                            let antigos = 0;
+                            const clientesProcessados = new Set(); // Para não contar o mesmo cliente duas vezes se ele tiver 2 OS
+
+                            // Se não houver data de início no filtro, vamos considerar os últimos 30 dias como padrão
+                            const dataReferencia = dataInicioFiltro ? new Date(dataInicioFiltro) : new Date();
+                            if (!dataInicioFiltro) dataReferencia.setDate(dataReferencia.getDate() - 30);
+
+                            dados.forEach(os => {
+                                if (os.cliente && os.cliente._id && !clientesProcessados.has(os.cliente._id)) {
+                                    clientesProcessados.add(os.cliente._id);
+
+                                    // Verificamos a data de criação do cliente
+                                    const dataCriacaoCliente = new Date(os.cliente.criadoEm);
+
+                                    if (dataCriacaoCliente >= dataReferencia) {
+                                        novos++;
+                                    } else {
+                                        antigos++;
+                                    }
+                                }
+                            });
+
+                            new Chart(document.getElementById('graficoNovosClientes'), {
+                                type: 'pie',
+                                data: {
+                                    labels: ['Novos Clientes', 'Clientes Antigos'],
+                                    datasets: [{
+                                        data: [novos, antigos],
+                                        backgroundColor: ['#ffc107', '#6c757d'], // Amarelo para novos, Cinza para antigos
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    plugins: {
+                                        title: {
+                                            display: true,
+                                            text: `Total de Clientes Atendidos: ${novos + antigos}`
+                                        },
+                                        legend: { position: 'bottom' }
+                                    }
+                                }
+                            });
+                        }
+                    </script>
+                </div>
             </div>
-
         </div>
-    </div>
-</div>
 
-<%- include('../includes/footer') %>
+        <%- include('../includes/footer') %>
