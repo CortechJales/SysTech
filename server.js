@@ -3,12 +3,13 @@ const fs = require('fs');
 const express = require('express');
 const mongoose = require('mongoose');
 const session = require('express-session');
-const MongoStore = require('connect-mongo'); // Importação para v6
+const MongoStore = require('connect-mongo');
 const flash = require('connect-flash');
 const helmet = require('helmet');
 const csrf = require('csurf');
 
 // ===== CONFIGURAÇÃO DOTENV =====
+// Garante que o .env seja lido tanto em dev quanto no executável do Electron
 if (process.versions.electron) {
   const envPath = path.join(process.resourcesPath, '.env');
   require('dotenv').config({ path: fs.existsSync(envPath) ? envPath : undefined });
@@ -32,8 +33,11 @@ const isElectron = !!process.versions.electron;
 let localConn = null;
 let onlineConn = null;
 
-// ===== CONFIGURAÇÕES EXPRESS (BÁSICAS) =====
-app.use(helmet({ contentSecurityPolicy: false }));
+// ===== CONFIGURAÇÕES EXPRESS =====
+app.use(helmet({ 
+  contentSecurityPolicy: false, // Necessário para carregar scripts como Chart.js via CDN
+  crossOriginEmbedderPolicy: false 
+}));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.resolve(__dirname, 'public')));
@@ -44,11 +48,11 @@ app.set('view engine', 'ejs');
 // ===== INICIALIZAÇÃO DO SERVIDOR =====
 async function startServer() {
   try {
-    // 1. CONEXÃO LOCAL (Obrigatória)
+    // 1. CONEXÃO LOCAL (Obrigatória para o sistema abrir)
     localConn = await mongoose.createConnection(process.env.MONGO_LOCAL).asPromise();
     console.log('✅ MongoDB LOCAL conectado');
 
-    // 2. CONEXÃO ONLINE (Não bloqueante / Resiliente a queda de DNS)
+    // 2. CONEXÃO ONLINE (Resiliente)
     try {
       onlineConn = await mongoose.createConnection(process.env.MONGO_ONLINE, {
         serverSelectionTimeoutMS: 2000, 
@@ -56,20 +60,19 @@ async function startServer() {
       }).asPromise();
       console.log('☁️ MongoDB ONLINE conectado');
     } catch (err) {
-      console.log('⚠️ Modo Offline: Banco ONLINE indisponível (DNS/Internet).');
+      console.log('⚠️ Modo Offline: Banco ONLINE indisponível.');
     }
 
-    // 3. CONFIGURAÇÃO DE SESSÃO (Compatível com connect-mongo v6)
-    // Se MongoStore for um objeto com .default, usamos o .default.create
+    // 3. CONFIGURAÇÃO DE SESSÃO
     const storeCreator = MongoStore.create || (MongoStore.default && MongoStore.default.create);
     
     if (!storeCreator) {
-        throw new Error('Não foi possível encontrar o método create no MongoStore.');
+        throw new Error('Não foi possível carregar o MongoStore.');
     }
 
     app.use(
       session({
-        secret: 'systech_secret_key',
+        secret: 'systech_secret_key_secure',
         store: storeCreator({ 
             mongoUrl: process.env.MONGO_LOCAL,
             ttl: 14 * 24 * 60 * 60 // 14 dias
@@ -94,26 +97,38 @@ async function startServer() {
     // Rotas
     app.use(routes);
 
-    // 4. ESCUTAR PORTA
-    app.listen(PORT, () => {
-      console.log(isElectron 
-        ? `🚀 Servidor Electron rodando em http://localhost:${PORT}` 
-        : `🚀 Servidor Web rodando em http://localhost:${PORT}`
-      );
+    // 4. ESCUTAR PORTA (Retornando Promise para sincronia com Electron)
+    return new Promise((resolve, reject) => {
+      const server = app.listen(PORT, () => {
+        console.log(isElectron 
+          ? `🚀 Servidor Electron ativo em http://localhost:${PORT}` 
+          : `🚀 Servidor Web ativo em http://localhost:${PORT}`
+        );
+        
+        // Iniciar Workers após o servidor subir
+        startBackgroundWorkers();
+        resolve(server);
+      });
+
+      server.on('error', (err) => {
+        if (err.code === 'EADDRINUSE') {
+          console.error(`❌ Porta ${PORT} já está em uso.`);
+          reject(new Error(`A porta ${PORT} já está ocupada por outro programa.`));
+        } else {
+          reject(err);
+        }
+      });
     });
 
-    // Iniciar Workers de sincronização e reconexão
-    startBackgroundWorkers();
-
   } catch (e) {
-    console.error('❌ Erro crítico ao iniciar o servidor:', e);
-    process.exit(1);
+    console.error('❌ Erro crítico no server.js:', e.message);
+    throw e; // Lança para o main.js capturar no dialog.showErrorBox
   }
 }
 
-// ===== TRABALHADORES DE FUNDO =====
+// ===== TRABALHADORES DE FUNDO (Workers) =====
 function startBackgroundWorkers() {
-  // Reconexão Online
+  // Reconexão Online Automática
   setInterval(async () => {
     if (!onlineConn || onlineConn.readyState !== 1) {
       try {
@@ -122,28 +137,32 @@ function startBackgroundWorkers() {
         }).asPromise();
         console.log('🔄 MongoDB ONLINE reconectado');
       } catch (e) {
-        // Silencioso
+        // Silencioso: continua tentando em background
       }
     }
-  }, 20000);
+  }, 30000); // 30 segundos
 
-  // Processamento da Fila
+  // Sincronização Local -> Online
   setInterval(async () => {
     if (onlineConn && onlineConn.readyState === 1 && localConn) {
       try {
         await processQueue(localConn, onlineConn);
       } catch (e) {
-        console.error('❌ Erro na sincronização:', e.message);
+        console.error('❌ Erro na sincronização automática:', e.message);
       }
     }
-  }, 30000);
+  }, 60000); // 1 minuto
 }
 
-// Execução
+// Execução automática apenas se NÃO for Electron (modo Web via nodemon)
 if (!isElectron) {
-  startServer();
+  startServer().catch(err => {
+    console.error(err);
+    process.exit(1);
+  });
 }
 
+// Exports para o main.js do Electron
 module.exports = {
   startServer,
   getLocalConnection: () => localConn,

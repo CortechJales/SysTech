@@ -12,4 +12,4 @@ const relatorio = new Relatorio('.container-relatorio');
 os.init();
 login.init();
 cadastro.init();
-relatorio.init(); // 🔥 Inicie aqui
+relatorio.init();
