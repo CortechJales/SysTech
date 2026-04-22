@@ -1,0 +1,81 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="/">SysTech</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        
+        <% if(user) { %>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownCliente" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              Clientes
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="navbarDropdownCliente">
+              <li><a class="dropdown-item" href="/cliente/new">Cadastrar Novo</a></li>
+              <li><a class="dropdown-item" href="/cliente/list">Lista de Clientes</a></li>
+            </ul>
+          </li>
+
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMotor" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              Equipamentos
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="navbarDropdownMotor">
+              <li><a class="dropdown-item" href="/equipamento/list">Lista de Equipamentos</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><span class="dropdown-item-text text-muted"><small>Cadastros via ficha do cliente</small></span></li>
+            </ul>
+          </li>
+
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownOS" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              Serviços / OS
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="navbarDropdownOS">
+              <li><a class="dropdown-item" href="/os/list">Lista de OS / Orçamentos</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><span class="dropdown-item-text text-muted"><small>Nova OS via Lista de Equipamentos</small></span></li>
+               <li><hr class="dropdown-divider"></li>
+               <li><a class="dropdown-item" href="/relatorio">Relatório OS</a></li>
+              
+            </ul>
+          </li>
+
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownCatalogo" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              Catálogo
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="navbarDropdownCatalogo">
+              <li><h6 class="dropdown-header">Produtos / Peças</h6></li>
+              <li><a class="dropdown-item" href="/produto/new">Novo Produto</a></li>
+              <li><a class="dropdown-item" href="/produto/list">Lista de Produtos</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><h6 class="dropdown-header">Marcas</h6></li>
+              <li><a class="dropdown-item" href="/marca/new">Nova Marca</a></li>
+              <li><a class="dropdown-item" href="/marca/list">Lista de Marcas</a></li>
+            </ul>
+          </li>
+        <% } %>
+
+      </ul>
+
+      <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+        <% if(user) { %>
+          <li class="nav-item">
+            <span class="nav-link text-info">Olá, <%= user.nome %></span>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/login/logout">Sair</a>
+          </li>
+        <% } else { %>
+          <li class="nav-item">
+            <a class="nav-link" href="/login/index">Entrar / Registrar</a>
+          </li>
+        <% } %>
+      </ul>
+    </div>
+  </div>
+</nav>

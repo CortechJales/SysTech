@@ -1,0 +1,86 @@
+<%- include('../includes/head')%>
+<%- include('../includes/nav')%>
+
+<div class="container">
+  <div class="row">
+    <div class="col-lg-3"></div>
+    
+    <div class="col-lg-6 my-3">
+      <h1 class="text-center">Produto / Peça</h1>
+      <p class="text-center lead">Gerencie os itens do seu catálogo</p>
+
+      <%- include('../includes/messages') %>
+
+      <% if(produto._id){ %>
+        <form action="/produto/edit/<%= produto._id %>" method="post">
+      <% } else { %>
+        <form action="/produto/register" method="post">
+      <% } %>
+        
+        <input type="hidden" name="_csrf" value="<%=csrfToken %>">
+
+        <div class="card shadow-sm border-0">
+          <div class="card-body p-4">
+            
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">Código</label>
+                <input type="text" 
+                       class="form-control bg-light" 
+                       value="<%= produto.codigo ? '#' + produto.codigo : 'Automático' %>" 
+                       readonly>
+                <small class="text-muted">Gerado pelo sistema</small>
+              </div>
+
+              <div class="col-md-8 mb-3">
+                <label class="form-label fw-bold">Preço de Venda (R$)</label>
+                <div class="input-group">
+                  <span class="input-group-text">R$</span>
+                  <input type="number" 
+                         step="0.01" 
+                         value="<%= produto.valorVenda %>" 
+                         class="form-control" 
+                         name="valorVenda" 
+                         placeholder="0.00" 
+                         required>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">Descrição / Nome do Item</label>
+              <input type="text" 
+                     value="<%= produto.descricao %>" 
+                     class="form-control" 
+                     name="descricao" 
+                     placeholder='Ex: Tela 15,6"' 
+                     required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold">Tipo do Item</label>
+              <select class="form-select" name="tipo" required>
+                <option value="Peça" <%= produto.tipo === 'Peça' ? 'selected' : '' %>>📦 Peça / Produto</option>
+                <option value="Serviço" <%= produto.tipo === 'Serviço' ? 'selected' : '' %>>🛠️ Serviço / Mão de Obra</option>
+              </select>
+              <small class="text-muted">Isso define como o item aparecerá nos relatórios financeiros.</small>
+            </div>
+
+            <hr class="my-4">
+
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+              <a href="/produto/list" class="btn btn-outline-secondary px-4">Cancelar</a>
+              <button type="submit" class="btn btn-primary px-5 shadow-sm">
+                <%= produto._id ? 'Atualizar Produto' : 'Cadastrar Produto' %>
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="col-lg-3"></div>
+  </div>
+</div>
+
+<%- include('../includes/footer')%>

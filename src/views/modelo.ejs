@@ -1,0 +1,91 @@
+<%- include('../includes/head')%>
+<%- include('../includes/nav')%>
+
+<div class="container">
+  <div class="row">
+    <div class="col-lg-2"></div>
+    
+    <div class="col-lg-8 my-4">
+      <div class="text-center mb-4">
+        <h1 class="display-5">Título do Cadastro</h1>
+        <p class="text-muted lead">Subtítulo explicativo para orientar o usuário</p>
+      </div>
+
+      <%- include('../includes/messages') %>
+
+      <% if(objeto._id){ %>
+        <form action="/rota/edit/<%= objeto._id %>" method="post">
+      <% } else { %>
+        <form action="/rota/register" method="post">
+      <% } %>
+        
+        <input type="hidden" name="_csrf" value="<%=csrfToken %>">
+        <input type="hidden" name="referenciaId" value="<%= idRelacionado %>">
+
+        <div class="card border-0 shadow-sm">
+          <div class="card-body p-4">
+            
+            <h5 class="card-title mb-4 text-primary">Informações Básicas</h5>
+            
+            <div class="row">
+              <div class="col-md-8 mb-3">
+                <label class="form-label fw-bold">Campo Principal</label>
+                <input type="text" value="<%= objeto.campo1 %>" class="form-control" name="campo1" placeholder="Ex: Digite algo..." required>
+              </div>
+
+              <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">Seleção</label>
+                <select name="campo_select" class="form-select">
+                  <option value="">Selecione...</option>
+                  <% lista.forEach(item => { %>
+                    <option value="<%= item._id %>" <%= (objeto.ref === item._id.toString()) ? 'selected' : '' %>>
+                      <%= item.descricao %>
+                    </option>
+                  <% }) %>
+                </select>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Data</label>
+                <input type="date" value="<%= objeto.data %>" class="form-control" name="data">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Valor (R$)</label>
+                <input type="number" step="0.01" value="<%= objeto.valor %>" class="form-control" name="valor">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Status</label>
+                <select name="ativo" class="form-select">
+                  <option value="true" <%= objeto.ativo !== false ? 'selected' : '' %>>Ativo</option>
+                  <option value="false" <%= objeto.ativo === false ? 'selected' : '' %>>Inativo</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Observações / Descrição Detalhada</label>
+              <textarea name="obs" class="form-control" rows="4"><%= objeto.obs %></textarea>
+            </div>
+
+            <hr class="my-4">
+            <div class="d-flex justify-content-between align-items-center">
+              <a href="/rota/list" class="btn btn-outline-secondary px-4">
+                <i class="bi bi-arrow-left"></i> Voltar
+              </a>
+              <button type="submit" class="btn btn-primary btn-lg px-5 shadow-sm">
+                Salvar Dados
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="col-lg-2"></div>
+  </div>
+</div>
+
+<%- include('../includes/footer')%>

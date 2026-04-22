@@ -1,0 +1,70 @@
+<%- include('../includes/head')%>
+<%- include('../includes/nav')%>
+
+<div class="container">
+  <div class="row">
+    <div class="col-lg-12 my-3">
+      <h1 class="text-center">Clientes</h1>
+      <p class="text-center lead">Sua lista de contatos e clientes cadastrados</p>
+
+      <%- include('../includes/messages') %>
+
+      <% if(clientes.length > 0) { %>
+        <div class="table-responsive shadow-sm">
+          <table class="table table-hover mt-3">
+            <thead class="table-dark">
+              <tr>
+                <th>Nome</th>
+                <th>CPF / CNPJ</th>
+                <th>Telefone</th>
+                <th>Cidade/UF</th>
+                <th class="text-center">Status</th>
+                <th class="text-center">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% clientes.forEach(cliente => { %>
+                <tr>
+                  <td><strong><%= cliente.nome %></strong></td>
+                  <td><%= cliente.cpf_cnpj %></td>
+                  <td><%= cliente.telefone %></td>
+                  <td><%= cliente.cidade %> / <%= cliente.estado %></td>
+                  
+                  <td class="text-center">
+                    <span class="badge <%= cliente.ativo ? 'bg-success' : 'bg-secondary' %>">
+                      <%= cliente.ativo ? 'Ativo' : 'Inativo' %>
+                    </span>
+                  </td>
+
+                  <td class="text-center"> 
+                    <div class="btn-group btn-group-sm">
+                      <a href="/equipamento/list/<%= cliente._id %>" class="btn btn-info ms-2" title="Ver Equipamentos">
+                         Equipamentos
+                      </a>
+
+                      <a href="/equipamento/new/<%= cliente._id %>" class="btn btn-success ms-2" title="Novo Equipamento">
+                        + Equipamento
+                      </a>
+                      
+                      <a href="/cliente/load/<%= cliente._id %>" class="btn btn-warning ms-2">
+                        Editar
+                      </a>
+                      <a href="/cliente/delete/<%= cliente._id %>" class="btn btn-danger ms-2">
+                        Excluir
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } else { %>
+        <div class="alert alert-info text-center">Não existem clientes cadastrados na sua agenda.</div>
+      <% } %>
+
+    </div>
+  </div>
+</div>
+
+<%- include('../includes/footer')%>
